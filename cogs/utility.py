@@ -5,7 +5,7 @@ import random
 from .config import *
 
 class Utilities:
-
+	# Comment to test .gitignore
 	def __init__(self, bot):
 		self.bot = bot
 

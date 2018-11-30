@@ -11,7 +11,7 @@ from cogs import config
 
 def main():
 	
-	bot = commands.Bot(command_prefix="!", description="A bot I threw together")
+	bot = commands.Bot(command_prefix="$", description="A bot I threw together")
 
 ###################################################################################	
 # Load cogs
@@ -64,7 +64,7 @@ def main():
 			error_message = f"**[ERROR]** \n**GuildID**: {guild_id} \n**ChannelID**: {channel_id} \n**UserID**: {user_id} \n**Command Attempted**: {message} \n**ErrorType**: {type(error)} \n**Error**: {error}"
 
 			# DM error message to bot owner
-			user = bot.get_user(367692200030502912)
+			user = bot.get_user(owner_id)
 			await user.send(error_message)
 
 			# Notify user
@@ -73,8 +73,11 @@ def main():
 ###################################################################################	
 # Run bot	
 
-	with open('token.txt') as fh:
+	with open('token2.txt') as fh:
 		token = fh.readline()
+
+	with open('owner_id.txt') as fh:
+		owner_id = int(fh.readline())
 	
 	random.seed(time.time())
 	

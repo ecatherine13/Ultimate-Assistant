@@ -179,12 +179,43 @@ Command | Aliases | Example | Description
 
 ## Self-Hosting <a name="hosting"></a>
 
-UA isn't meant to be self-hosted yet.
+UA isn't meant to be self-hosted yet, but it can be done. UA was developed on Ubuntu 16.04 with Python 3.6 and discord.py rewrite version.
+
+1. Obtain a bot token by following the instructions here: 
+
+https://discordpy.readthedocs.io/en/rewrite/discord.html
+
+2. Clone the repository:
+
+`git clone https://github.com/ecatherine13/Ultimate-Assistant.git`
+
+3. Create a file called `token.txt`, and paste your bot token as a single line.
+
+4. This bot currently sends error reports to the developer's Discord account. To disable this, comment out the appropriate line in `main.py`. Otherwise, create a file called `owner_id.txt`, and paste your 18 digit user id as a single line.
+
+5. It's highly recommended to use a python3.6 virtual environment. To do so, follow the instructions here:
+
+https://docs.python.org/3.6/library/venv.html
+
+6. Activate the virtual environment:
+
+`source \</path/to/venv\>bin/activate`
+
+7. Install discord.py rewrite. One way to do this is with:
+
+`pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py`
+
+UA does not need voice features, but if desired, you may use:
+
+`pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]`
+
+8. Run the bot with:
+
+`python main.py`
 
 ## Future Updates <a name="future_updates"></a>
 
 * Better error handling
 * Performance improvements
-* Instructions for self hosting
 * Channel archiving
 * Fun things
