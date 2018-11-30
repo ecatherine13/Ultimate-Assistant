@@ -73,7 +73,7 @@ def main():
 ###################################################################################	
 # Run bot	
 
-	with open('token2.txt') as fh:
+	with open('token.txt') as fh:
 		token = fh.readline()
 
 	with open('owner_id.txt') as fh:
