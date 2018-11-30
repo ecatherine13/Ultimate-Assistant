@@ -193,15 +193,17 @@ https://discordpy.readthedocs.io/en/rewrite/discord.html
 
 4. This bot currently sends error reports to the developer's Discord account. To disable this, comment out the appropriate line in `main.py`. Otherwise, create a file called `owner_id.txt`, and paste your 18 digit user id as a single line.
 
-5. It's highly recommended to use a python3.6 virtual environment. To do so, follow the instructions here:
+5. Change `master-empty.db` to `master.db`
+
+6. It's highly recommended to use a python3.6 virtual environment. To do so, follow the instructions here:
 
 https://docs.python.org/3.6/library/venv.html
 
-6. Activate the virtual environment:
+7. Activate the virtual environment:
 
-`source \</path/to/venv\>bin/activate`
+`source </path/to/venv>bin/activate`
 
-7. Install discord.py rewrite. One way to do this is with:
+8. Install discord.py rewrite. One way to do this is with:
 
 `pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py`
 
@@ -209,7 +211,7 @@ UA does not need voice features, but if desired, you may use:
 
 `pip install -U git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]`
 
-8. Run the bot with:
+9. Run the bot with:
 
 `python main.py`
 
