@@ -11,9 +11,28 @@ class Events:
 
 	async def on_ready(self):
 		print(f"\nLogged in as {self.bot.user.name} - {self.bot.user.id}\nVersion: {discord.__version__}\n")
-		await self.bot.change_presence(activity=discord.Game(name='!help'))
+		await self.bot.change_presence(activity=discord.Game(name='$help'))
 
-		# Switch this on later! 
+		# Correct announcements that have passed without posting (post times during bot downtime)
+		time_now = datetime.datetime.utcnow()
+		int_timestamp_now = int(time_now.strftime("%Y%m%d%H%M"))
+
+		cs.execute(f"SELECT Frequency, NextPosting, GuildID, ChannelID FROM Announcements WHERE NextPosting < {int_timestamp_now}")
+		passed_announcements = cs.fetchall()
+
+		# There's probably a nicer and faster way to do this, but for now, just loop.
+		for announcement in passed_announcements:
+			frequency = announcement[0]
+			passed_time = datetime.datetime.strptime(str(announcement[1]), "%Y%m%d%H%M")
+
+			while (passed_time < time_now):
+				passed_time = passed_time + datetime.timedelta(hours=frequency)
+
+			passed_time_int = int(passed_time.strftime("%Y%m%d%H%M"))
+
+			cs.execute(f"UPDATE Announcements SET NextPosting = {passed_time_int} WHERE GuildID == {announcement[2]} AND ChannelID == {announcement[3]} AND NextPosting == {announcement[1]} AND Frequency == {frequency} LIMIT 1")
+			conn.commit()
+
 		self.bot.loop.create_task(self.announcement_task())
 
 	async def on_guild_join(self, ctx):
@@ -40,10 +59,15 @@ class Events:
 			await ctx.add_roles(role)
 
 	async def on_member_remove(self, ctx):
-		# TODO - Remove from User table
+		# TODO - Remove from User table?
+		return 0
+
+	async def on_guild_remove(self, ctx):
+		# TODO - Remove guild data from all tables
 		return 0
 
 	# Announcement background task
+	# TODO Allow for time pauses
 	async def announcement_task(self):
 		in_sync = False # Changes to true on the first half hour available
 		while (True):

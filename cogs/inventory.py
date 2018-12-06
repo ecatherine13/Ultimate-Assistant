@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from .config import *
 import json
+import random
 
 class Inventory:
 	def __init__(self, bot):
@@ -14,7 +15,7 @@ class Inventory:
 		char_nickname = cs.fetchone()[2]
 
 		if(char_nickname == None):
-			await ctx.send("You do not have a character set up!")
+			await ctx.send("You do not have a character set up! If you should, contact an admin.")
 		else:
 			# Get the character name by GuildID, UserID, and Nickname
 			cs.execute(f"SELECT * FROM Characters WHERE GuildID == {ctx.guild.id} AND PlayerID == {ctx.message.author.id} AND CharNickname == ? LIMIT 1", (f"{char_nickname}",))
@@ -25,8 +26,36 @@ class Inventory:
 	# Switch the character you're playing as. Very situational, like NPCs
 	@commands.command(name="set_char", aliases=["setchar"], help="Switch your 'playing as' character. Very situational.")
 	async def set_char(self, ctx):
-		# TODO because I'm lazy
-		await ctx.send("Code not written yet. <_<")
+		def pred(msg):
+			return msg.author == ctx.message.author and msg.channel == ctx.message.channel
+
+		guild_id = ctx.guild.id
+		player_id = ctx.message.author.id
+
+		cs.execute(f"SELECT CharName, CharNickname FROM Characters WHERE GuildID == {guild_id} AND PlayerID == {player_id}")
+
+		char_entries = cs.fetchall()
+		embed_str = ''
+		idx = 0
+		for char in char_entries:
+			embed_str = embed_str + f"[{idx}] {char[0]} - {char[1]}\n"
+			idx += 1
+
+		if (embed_str == ''):
+			await ctx.send("You do not have any characters set up on this server! If you should, contact an admin to set one up.")
+		else:
+			color = int("%06x" % random.randint(0, 0xFFFFFF), 16)
+			embed = discord.Embed(title=f"Characters played by {ctx.message.author} on {ctx.guild}", color=color, description=embed_str)
+			await ctx.send(embed=embed)
+
+			await ctx.send("Enter a number: ")
+			entry_num = await self.bot.wait_for('message', check=pred, timeout=60)
+			char_to_set = char_entries[int(entry_num.content)]
+
+			cs.execute(f"UPDATE UserData SET PlayingAs = ? WHERE GuildID == {guild_id} AND UserID == {player_id}", (f"{char_to_set[1]}",))
+			conn.commit()
+
+			await ctx.send(f"{ctx.message.author} is now playing as {char_to_set[0]}!")
 
 	# Embed inventory. Returns embed
 	def embed_inventory(self, guild_id, char_nickname):

@@ -31,6 +31,8 @@ Attach Files
 
 ## Contents
 
+[Version Updates](#updates)
+
 [General](#general)
 
 [Player](#player)
@@ -49,6 +51,12 @@ Attach Files
 [Self-hosting](#hosting)
 
 [Future Updates](#future_updates)
+
+## Version Updates <a name="updates"></a>
+
+__2018-12-06__
+* Should the bot go offline, it will check for scheduled announcements that were missed and adjust the next posting time.
+* Command to switch characters implemented
 
 ## General <a name="general"></a>
 
