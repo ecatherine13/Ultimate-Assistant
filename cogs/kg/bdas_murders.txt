@@ -1,0 +1,6 @@
+{
+"<v1> is found dead in the bathroom with their throat slit, <v2> is discovered frozen to death in the walk-in freezer.": "<k1> murdered <v1> to save their family. <k2> locked <v2> in the freezer due to sheer absentmindedness.", 
+"An unidentifiable body is found by the incinerator!": "<k1> covered themself, interrogated <v1> for voice recordings, then pulled a double-bluff at the trial to try and convince everyone <v1> was the true killer.", 
+"<w1> alerts everyone of the swift assassination of <v1> in the dead of night.": "<k1> manipulated <w1> to witness a fake death scene while they killed <v1> somewhere else.", 
+"<v1> is found dead with  single shotgun wound.": "<k1> and <a1> planted <w1> as a witness, using the Pepper's Ghost illusion to fake an alibi while <k1> shot <v1> from a rooftop."
+}
