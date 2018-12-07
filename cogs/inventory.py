@@ -41,26 +41,6 @@ class Inventory:
 		regex = "( \(x[0-9]*\))$"
 		return re.sub(regex, "", item_name_full)
 
-	@commands.command(name="dev")
-	async def dev(self, ctx):
-		regex = "( \(x[0-9]*\))$"
-
-		strings = ["Sunglasses", "Pencil (x2)", "Lume Sword", "Iron Nails (x10)"]
-		for string in strings:
-			# matches = re.search(regex, string)
-			# if(matches):
-			# 	print(matches.group(1))
-			# else:
-			# 	print("None")
-			regex = "( \(x[0-9]*\))$"
-			string = re.sub(regex, "", string)
-			print(string)
-
-		# self.get_item_str("Sunglasses", increase=True)
-		# self.get_item_str("Pencil (x2)", True)
-		# self.get_item_str("Lume Sword", False)
-		# self.get_item_str("Iron Nails (x10)", False)
-
 	# Most players will only have one character. The most recently created one is automatically assigned to them. This allows them to view who they're playing as.
 	@commands.command(name="playing_as", aliases=["iam", "my_char", "mc"], help="View who you're playing as")
 	async def playing_as(self, ctx):

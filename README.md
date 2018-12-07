@@ -80,7 +80,7 @@ Command | Aliases | Example | Description
 
 ### Inventory / Gacha <a name="player_inventory"></a>
 
-Fairly straighforward inventories. They are currently **case sensitive** and do not allow exact repeats of names.
+Fairly straighforward inventories.
 
 Command | Aliases | Example | Description
 --- | --- | --- | ---
@@ -145,7 +145,7 @@ Command | Aliases | Example | Description
 --- | --- | --- | ---
 !ainventory \<nickname\> | aitems | !aitems sakura | Displays any character's inventory.
 !give \<nickname\> | give_item | !give leon | Prompts for an item name and description. 
-!confiscate \<nickname\> | take_from, takefrom | !takefrom naomi | Displays inventory and prompts for an item name (case sensitive).
+!confiscate \<nickname\> | take_from, takefrom | !takefrom naomi | Displays inventory and prompts for an item name.
 !set_currency \<name\> | - | !set_currency Yen | Allows renaming the server's currency. Defaults to 'Coins' if not set.
 !amoney \<nickname\> | awallet | !amoney anne | View how much currency a player has.
 !give_money \<amount\>| pay, givemoney, givecoins, give_coins | !pay anne | Grants the player currency. Enter a negative number to take currency.
