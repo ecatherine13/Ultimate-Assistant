@@ -10,11 +10,11 @@ UA will DM the developer with the message. User ID is provided in order to scree
 
 To view this README, use:
 
-`!source | !docs | !readme`
+`!docs | !src | !source | !readme`
 
 ## Important
 
-This bot functions on the premise that admin will set up each player with a character. Multiple characters can be assigned to one user, but only the most recently initiated one will be considered (TODO: switching command). Upon initiation, the character is assigned a unique nickname for look-up purposes. This is to accomodate repeated names, and so that long names do not need to be fully typed. In most cases, the nickname will just be the character's first name.
+This bot functions on the premise that admin will set up each player with a character. Multiple characters can be assigned to one user, with the most recently made one automatically being assigned. Upon initiation, the character is assigned a unique nickname for look-up purposes. This is to accomodate repeated names, and so that long names do not need to be fully typed. In most cases, the nickname will just be the character's first name.
 
 To use every feature of UA, the bot's highest role will need the following permissions: (TODO: Better handling of BotMissingPermissions error)
 
@@ -57,6 +57,8 @@ Attach Files
 __2018-12-06__
 * Should the bot go offline, it will check for scheduled announcements that were missed and adjust the next posting time.
 * Command to switch characters implemented
+* Finalized link to github repository
+* Inventories are no longer case sensitive, and allow duplicates
 
 ## General <a name="general"></a>
 
@@ -73,6 +75,7 @@ Command | Aliases | Example | Description
 Command | Aliases | Example | Description
 --- | --- | --- | ---
 !playing_as | iam, my_char, mc | - | Displays the name of your in-game character as set up by an administrator. 
+!set_char | setchar | - | Allows player to switch their character. Useful in cases of multiple NPCs, otherwise situational.
 !anon_dm \<character\> \<message\>| anondm, anon_pm, anonpm, adm, apm | !adm Sonia A secret message for you | Send an anonymous DM to a player. This feature is *OFF* by default and must be enabled by an administrator with `!toggle_adm`. ***Disclaimer: The server admins are automatically DMed a record of the message. The developer is not responsible for abuse of this feature.***
 
 ### Inventory / Gacha <a name="player_inventory"></a>

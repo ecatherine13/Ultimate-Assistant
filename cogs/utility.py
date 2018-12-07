@@ -202,10 +202,10 @@ class Utilities:
 		await ctx.send("Feedback sent!")
 
 	# Link to README
-	@commands.command(name="source", aliases=["readme", "docs"], help="Posts a link to UA's github page.")
+	@commands.command(name="source", aliases=["readme", "docs", "src"], help="Posts a link to UA's github page.")
 	async def source(self, ctx):
 		# TODO link here
-		await ctx.send("Not finalized yet.")
+		await ctx.send("https://github.com/ecatherine13/Ultimate-Assistant/")
 
 def setup(bot):
 	bot.add_cog(Utilities(bot))

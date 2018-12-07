@@ -4,10 +4,43 @@ from .config import *
 import re
 import random
 import json
+from .utils import *
 
 class Gacha:
 	def __init__(self, bot):
 		self.bot = bot
+
+	# Returns the item string to add to inventory. Can return None to indicate depletion of item.
+	# If increase False, item is being dropped
+	def get_item_str(self, item_name, increase=True):
+		regex = "(.*) \(x([0-9]*)\)$"
+		captures = re.search(regex, item_name)
+
+		if (captures): # There is more than 1 item
+			item_name = captures.group(1)
+			item_amount = int(captures.group(2))
+
+			if (increase): # add one
+				if (item_amount >= 2): # Don't use number for less than 2
+					item_str = f"{item_name} (x{item_amount+1})"
+				else:
+					item_str = item_name
+			else: # remove one
+				if (item_amount == 2): # Going down to 1
+					item_str = item_name
+				else:
+					item_str = f"{item_name} (x{item_amount-1})"
+		else: # Only one of the item (no number captured)
+			if (increase):
+				item_str = f"{item_name} (x2)"
+			else:
+				item_str = None
+		return item_str
+
+	# Take the full name and return the string without any (xn)
+	def item_to_base(self, item_name_full):
+		regex = "( \(x[0-9]*\))$"
+		return re.sub(regex, "", item_name_full)
 
 	# Display all gacha items with descriptions for guild. Returns list of embeds
 	def embed_gacha(self, guild):
@@ -271,31 +304,43 @@ class Gacha:
 			# Select a random item from the gacha list
 			item_idx = random.randint(0, len(gacha_list)-1)
 			item_drawn = gacha_list[item_idx]
-			item_name = item_drawn[1]
+			item_name_base = item_drawn[1]
 			item_description = item_drawn[2]
 			item_image_url = item_drawn[3]
 
 			# Display item (part 1)
 			color = int("%06x" % random.randint(0, 0xFFFFFF), 16)
 			embed = discord.Embed(title=f"{char_name} obtains an item!", color=color)
-			embed.add_field(name=item_name, value=item_description)
+			embed.add_field(name=item_name_base, value=item_description)
 
 			# Add item to the player's inventory. If they already have it, make a note of it.
 			# TODO - account for multiple of same gacha item.
 			inventory_json_str = str(char_entry[17])
 			inventory = json.loads(inventory_json_str) # Dictionary object
 
-			if (item_name not in inventory):
-				inventory[item_name] = item_description
-				json_dict_str = str(json.dumps(inventory))
+			for item_name_full in inventory:
 
-				# Update entry
-				cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname.title()}"))
-				conn.commit()
+				item_name_base_inv = self.item_to_base(item_name_full)
 
-				embed.set_footer(text=f"{item_name} given to {char_name}!")
-			else:
-				embed.set_footer(text=f"Aw, it's a repeat.")
+				# Item exists. Prevents duplicates based on case sensitivity.
+				if (item_name_base.lower() == item_name_base_inv.lower()):
+					new_item_name_full = self.get_item_str(item_name_full, increase=True)
+					inventory[new_item_name_full] = inventory[item_name_full]
+					del inventory[item_name_full]
+					cont = False
+					embed.set_footer(text=f"Aw, it's a repeat. Duplicate given to {char_name}.")
+					break
+
+			if (cont): # Item wasn't in inventory
+				inventory[item_name_base] = item_description
+				embed.set_footer(text=f"{item_name_base} given to {char_name}!")
+
+			# Dump to JSON
+			json_dict_str = str(json.dumps(inventory))
+
+			# Update entry
+			cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
+			conn.commit()
 
 			try:
 				embed.set_thumbnail(url=item_image_url)

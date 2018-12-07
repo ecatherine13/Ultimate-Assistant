@@ -3,10 +3,63 @@ from discord.ext import commands
 from .config import *
 import json
 import random
-
+import re
+# from .utils import *
 class Inventory:
 	def __init__(self, bot):
 		self.bot = bot
+
+	# Returns the item string to add to inventory. Can return None to indicate depletion of item.
+	# If increase False, item is being dropped
+	def get_item_str(self, item_name, increase=True):
+		regex = "(.*) \(x([0-9]*)\)$"
+		captures = re.search(regex, item_name)
+
+		if (captures): # There is more than 1 item
+			item_name = captures.group(1)
+			item_amount = int(captures.group(2))
+
+			if (increase): # add one
+				if (item_amount >= 2): # Don't use number for less than 2
+					item_str = f"{item_name} (x{item_amount+1})"
+				else:
+					item_str = item_name
+			else: # remove one
+				if (item_amount == 2): # Going down to 1
+					item_str = item_name
+				else:
+					item_str = f"{item_name} (x{item_amount-1})"
+		else: # Only one of the item (no number captured)
+			if (increase):
+				item_str = f"{item_name} (x2)"
+			else:
+				item_str = None
+		return item_str
+
+	# Take the full name and return the string without any (xn)
+	def item_to_base(self, item_name_full):
+		regex = "( \(x[0-9]*\))$"
+		return re.sub(regex, "", item_name_full)
+
+	@commands.command(name="dev")
+	async def dev(self, ctx):
+		regex = "( \(x[0-9]*\))$"
+
+		strings = ["Sunglasses", "Pencil (x2)", "Lume Sword", "Iron Nails (x10)"]
+		for string in strings:
+			# matches = re.search(regex, string)
+			# if(matches):
+			# 	print(matches.group(1))
+			# else:
+			# 	print("None")
+			regex = "( \(x[0-9]*\))$"
+			string = re.sub(regex, "", string)
+			print(string)
+
+		# self.get_item_str("Sunglasses", increase=True)
+		# self.get_item_str("Pencil (x2)", True)
+		# self.get_item_str("Lume Sword", False)
+		# self.get_item_str("Iron Nails (x10)", False)
 
 	# Most players will only have one character. The most recently created one is automatically assigned to them. This allows them to view who they're playing as.
 	@commands.command(name="playing_as", aliases=["iam", "my_char", "mc"], help="View who you're playing as")
@@ -98,8 +151,8 @@ class Inventory:
 		return embeds
 
 	# The ever helpful inventory stuff!
-	@commands.command(name="take", help="Add something to inventory. Optional (short) description. If the item name is more than one word, remember to use quotation marks! Case sensitive.")
-	async def take(self, ctx, item_name, *, description=None):
+	@commands.command(name="take", help="Add something to inventory. Optional (short) description. If the item name is more than one word, remember to use quotation marks!")
+	async def take(self, ctx, item_name_base, *, description=None):
 
 		player_id = ctx.message.author.id
 		guild_id = ctx.guild.id
@@ -119,23 +172,37 @@ class Inventory:
 			char_name = char_entry[2]
 			inventory_json_str = str(char_entry[17])
 			inventory = json.loads(inventory_json_str) # Dictionary object
-			
-			# If item is not in the keys already add. If it is, deny
-			if (item_name in inventory):
-				await ctx.send(f"{item_name} is already in your possession!")
-			else:
-				inventory[item_name] = description
-				json_dict_str = str(json.dumps(inventory))
 
-				# Update entry
-				cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
-				conn.commit()
+			cont = True
 
-				await ctx.send(f"{char_name} takes {item_name}.")
+			# Loops through the inventory because the names may contain a trailing ' (xn)'
+			for item_name_full in inventory:
+				item_name_base_inv = self.item_to_base(item_name_full)
+
+				# Item exists. Prevents duplicates based on case sensitivity.
+				if (item_name_base.lower() == item_name_base_inv.lower()):
+					new_item_name_full = self.get_item_str(item_name_full, increase=True)
+					print(new_item_name_full)
+					inventory[new_item_name_full] = inventory[item_name_full]
+					del inventory[item_name_full]
+					cont = False
+					break
+
+			if (cont): # Item wasn't in inventory
+				inventory[item_name_base] = description
+
+			# Dump to JSON
+			json_dict_str = str(json.dumps(inventory))
+
+			# Update entry
+			cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
+			conn.commit()
+
+			await ctx.send(f"{char_name} takes {item_name_base}.")
 
 	# Removing an item. TODO Allow null input for numbered list
-	@commands.command(name="drop", help="Remove an item from inventory by name. Case sensitive.")
-	async def drop(self, ctx, *, item_name):
+	@commands.command(name="drop", help="Remove an item from inventory by name.")
+	async def drop(self, ctx, *, item_name_base):
 		player_id = ctx.message.author.id
 		guild_id = ctx.guild.id
 
@@ -155,18 +222,34 @@ class Inventory:
 			inventory_json_str = str(char_entry[17])
 			inventory = json.loads(inventory_json_str) # Dictionary object
 			
-			# If item is not in the keys already, error.
-			if (item_name not in inventory):
-				await ctx.send(f"{item_name} is not in your possession!")
-			else:
-				inventory.pop(item_name, None)
-				json_dict_str = str(json.dumps(inventory))
+			cont = True
 
-				# Update entry
-				cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
-				conn.commit()
+			# Loops through the inventory because the names may contain a trailing ' (xn)'
+			for item_name_full in inventory:
+				item_name_base_inv = self.item_to_base(item_name_full)
 
-				await ctx.send(f"{char_name} drops {item_name}.")
+				# Item exists
+				if (item_name_base.lower() == item_name_base_inv.lower()):
+					new_item_name_full = self.get_item_str(item_name_full, increase=False)
+
+					if (new_item_name_full): # Not Null
+						inventory[new_item_name_full] = inventory[item_name_full]
+
+					del inventory[item_name_full]
+
+					# Update entry
+					json_dict_str = str(json.dumps(inventory))
+					cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
+					conn.commit()
+
+					await ctx.send(f"{char_name} drops {item_name_base}.")
+					
+					cont = False
+					break
+
+			if (cont): # Item wasn't in inventory
+				await ctx.send(f"{char_name} does not have that in their inventory!")
+				cont = False
 
 	# Viewing inventory. 25 items per embed
 	@commands.command(name="inventory", aliases=["items"], help="View your inventory")
@@ -215,27 +298,42 @@ class Inventory:
 			# Take input
 			await ctx.send(f"Enter an item to give {char_entry[2]}:")
 			item_name = await self.bot.wait_for('message', check=pred, timeout=60)
-			item_name = item_name.content
+			item_name_base = item_name.content
 
-			await ctx.send(f"Enter a description for {item_name}:")
+			await ctx.send(f"Enter a description for {item_name_base}:")
 			description = await self.bot.wait_for('message', check=pred, timeout=60)
 			description = description.content
 
 			inventory_json_str = str(char_entry[17])
 			inventory = json.loads(inventory_json_str) # Dictionary object
 			
-			# If item is not in the keys already add. If it is, deny
-			if (item_name in inventory):
-				await ctx.send(f"{item_name} is already in that character's possession!")
-			else:
-				inventory[item_name] = description
-				json_dict_str = str(json.dumps(inventory))
+			# Almost copy pasted code from !take. Should be modularized but I'm lazy
 
-				# Update entry
-				cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname.title()}"))
-				conn.commit()
+			cont = True
 
-				await ctx.send(f"{item_name} given to {char_entry[2]}.")
+			# Loops through the inventory because the names may contain a trailing ' (xn)'
+			for item_name_full in inventory:
+				item_name_base_inv = self.item_to_base(item_name_full)
+
+				# Item exists. Prevents duplicates based on case sensitivity.
+				if (item_name_base.lower() == item_name_base_inv.lower()):
+					new_item_name_full = self.get_item_str(item_name_full, increase=True)
+					inventory[new_item_name_full] = inventory[item_name_full]
+					del inventory[item_name_full]
+					cont = False
+					break
+
+			if (cont): # Item wasn't in inventory
+				inventory[item_name_base] = description
+
+			# Dump to JSON
+			json_dict_str = str(json.dumps(inventory))
+
+			# Update entry
+			cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname.title()}"))
+			conn.commit()
+
+			await ctx.send(f"{item_name_base} given to {char_entry[2]}.")
 
 	@commands.command(name="confiscate", aliases=["take_from", "takefrom"], help="Take an item from any character's inventory.")
 	@commands.has_permissions(administrator=True)
@@ -259,27 +357,42 @@ class Inventory:
 				await ctx.send(embed=embed)
 
 			# Get input
-			await ctx.send("Enter an item name to remove: (case sensitive)")
+			await ctx.send("Enter an item name to remove:")
 			item_to_remove = await self.bot.wait_for('message', check=pred, timeout=60)
-			item_to_remove = item_to_remove.content
+			item_name_base = item_to_remove.content
 
 			# Set up things
 			char_name = char_entry[2]
 			inventory_json_str = str(char_entry[17])
 			inventory = json.loads(inventory_json_str) # Dictionary object
 			
-			# If item is not in the keys already, error
-			if (item_to_remove not in inventory):
-				await ctx.send(f"{char_name} does not have {item_to_remove}!")
-			else:
-				inventory.pop(item_to_remove, None)
-				json_dict_str = str(json.dumps(inventory))
+			# More or less copy-pasted from !drop because I'm too dumb to modularize
+			cont = True
 
-				# Update entry
-				cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname.title()}"))
-				conn.commit()
+			# Loops through the inventory because the names may contain a trailing ' (xn)'
+			for item_name_full in inventory:
+				item_name_base_inv = self.item_to_base(item_name_full)
 
-				await ctx.send(f"Taken {item_to_remove} from {char_name}.")
+				# Item exists
+				if (item_name_base.lower() == item_name_base_inv.lower()):
+					new_item_name_full = self.get_item_str(item_name_full, increase=False)
+
+					if (new_item_name_full): # Not Null
+						inventory[new_item_name_full] = inventory[item_name_full]
+					del inventory[item_name_full]
+
+					# Update entry
+					json_dict_str = str(json.dumps(inventory))
+					cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname.title()}"))
+					conn.commit()
+
+					await ctx.send(f"{item_name_base} taken from {char_name}.")
+					
+					cont = False
+					break
+
+			if (cont): # Item wasn't in inventory
+				await ctx.send(f"{char_name} does not have that in their inventory!")
 
 	# Admin command to see a player's inventory
 	@commands.command(name="ainventory", aliases=["aitems"], help="View any character's inventory by nickname")

@@ -3,7 +3,6 @@ from discord.ext import commands
 from .config import *
 import re
 import random
-# from .utils import *
 
 class Admin:
 	def __init__(self, bot):

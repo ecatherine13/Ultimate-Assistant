@@ -11,7 +11,7 @@ from cogs import config
 
 def main():
 	
-	bot = commands.Bot(command_prefix="$", description="A bot I threw together")
+	bot = commands.Bot(command_prefix="!", description="A bot I threw together")
 
 ###################################################################################	
 # Load cogs

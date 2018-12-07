@@ -11,7 +11,7 @@ class Events:
 
 	async def on_ready(self):
 		print(f"\nLogged in as {self.bot.user.name} - {self.bot.user.id}\nVersion: {discord.__version__}\n")
-		await self.bot.change_presence(activity=discord.Game(name='$help'))
+		await self.bot.change_presence(activity=discord.Game(name='!help'))
 
 		# Correct announcements that have passed without posting (post times during bot downtime)
 		time_now = datetime.datetime.utcnow()
