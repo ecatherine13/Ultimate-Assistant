@@ -54,7 +54,7 @@ def main():
 		
 		elif isinstance(error, commands.BotMissingPermissions):
 			await ctx.send("My highest role does not have permissions to use this command!")
-			
+		
 		else:
 			guild_id = ctx.guild.id
 			channel_id = ctx.message.channel.id
@@ -68,7 +68,7 @@ def main():
 			await user.send(error_message)
 
 			# Notify user
-			await ctx.send("Error report sent.")
+			await ctx.send("Whoops! Something went wrong. Reminder that the timeout for all inputs is 60 s. An error report has been sent to the developer.")
 
 ###################################################################################	
 # Run bot	
