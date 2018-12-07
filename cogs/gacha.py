@@ -4,7 +4,6 @@ from .config import *
 import re
 import random
 import json
-from .utils import *
 
 class Gacha:
 	def __init__(self, bot):
