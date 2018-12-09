@@ -414,7 +414,8 @@ class Character_Management:
 		else:
 			# Display embed with current info, and then menu
 			embed = self.embed_char_info(guild_id, char_nickname)
-			self.embed_char_info(ctx, embed)
+			await self.display_char_info(ctx, embed)
+			
 			# Selection Menu Display
 			menu_str_IC =	"""
 							[1] Talent

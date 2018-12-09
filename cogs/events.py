@@ -63,8 +63,20 @@ class Events:
 		return 0
 
 	async def on_guild_remove(self, ctx):
-		# TODO - Remove guild data from all tables
-		return 0
+		# Remove guild specific things from announcements, investigations, gacha, and user data but leave characters for now.
+		# Remove announcements
+		cs.execute(f"DELETE FROM Announcements WHERE GuildID == {ctx.id}")
+
+		# Remove Investigations
+		cs.execute(f"DELETE FROM Investigations WHERE GuildID == {ctx.id}")
+
+		# Remove Gacha
+		cs.execute(f"DELETE FROM Gacha WHERE GuildID == {ctx.id}")
+
+		# Remove user data
+		cs.execute(f"DELETE FROM UserData WHERE GuildID == {ctx.id}")
+
+		conn.commit()
 
 	# Announcement background task
 	# TODO Allow for time pauses
@@ -94,8 +106,12 @@ class Events:
 					current_posting = announcement[4]
 
 					# Send message
-					channel = self.bot.get_channel(channel_id)
-					await channel.send(message)
+
+					try:
+						channel = self.bot.get_channel(channel_id)
+						await channel.send(message)
+					except: 
+						pass
 
 					# Update next posting
 					current_posting_datetime = datetime.datetime.strptime(str(current_posting), "%Y%m%d%H%M")	
