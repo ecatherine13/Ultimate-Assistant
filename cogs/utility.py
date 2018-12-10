@@ -179,8 +179,14 @@ class Utilities:
 			
 			# Send
 			recipient = self.bot.get_user(recipient_id)
-			await recipient.send(embed=embed)
 
+			try:
+				await recipient.send(embed=embed)
+			except:
+				await ctx.send("I am unable to send a DM to that person! They may only accept DMs from friends, or have me blocked.")
+				cont = False
+
+		if (cont):
 			await ctx.send("Message sent!")
 
 			# DM record to server administrators.
@@ -198,7 +204,7 @@ class Utilities:
 	@commands.command(name="feedback", help="This bot is still a WIP, and your feedback/suggestions are welcomed. Use this to send the developer a DM. The DM is completely anonymous save for user ID in order to screen for abuse/harassment.")
 	async def feedback(self, ctx, *, msg):
 		user = self.bot.get_user(367692200030502912)
-		await user.send(f"**[FEEDBACK]**\nID: {ctx.message.author.id}\n{msg[0:1950]}")
+		await user.send(f"**[FEEDBACK]**\nID: {ctx.message.author.id}\n{msg[0:1950]}\n--------------------------------------------")
 		await ctx.send("Feedback sent!")
 
 	# Link to README

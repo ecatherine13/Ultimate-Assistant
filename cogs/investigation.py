@@ -200,16 +200,20 @@ class Investigation:
 
 		# Check that the user is a player
 		cs.execute(f"SELECT PlayingAs from UserData WHERE GuildID == {guild_id} AND UserID == {player_id} LIMIT 1")
-		has_char = cs.fetchone()[0] is not None
-		
-		if(has_char == False):
+		try:
+			has_char = cs.fetchone()[0] is not None
+
+			if(has_char == False):
+				await ctx.send("You must be a player to investigate!")
+				cont = False
+		except TypeError:
 			await ctx.send("You must be a player to investigate!")
 			cont = False
 
 		if (cont):
 			channel_id = ctx.message.channel.id
 
-			cs.execute(f"SELECT ItemNames, ItemInfo FROM Investigations WHERE ChannelID == {channel_id}")
+			cs.execute(f"SELECT ItemNames, ItemInfo, Found FROM Investigations WHERE ChannelID == {channel_id}")
 
 			channel_objects_strs = cs.fetchall()
 
@@ -218,10 +222,15 @@ class Investigation:
 			for obj_str in channel_objects_strs:
 				obj_names = json.loads(obj_str[0])
 				if obj_name.lower() in obj_names:
-					# TODO DM
+					
 					user = self.bot.get_user(player_id)
 					await user.send(f"**{obj_name.upper()}** \n{obj_str[1]}")
 					success = True
+
+					# If user was first to find it, note it
+					if obj_str[2] == 0: # First
+						cs.execute(f"UPDATE Investigations ")
+
 					break
 
 			if (not success):

@@ -260,11 +260,20 @@ class Gacha:
 		# Get the player's character (if it exists)
 		cs.execute(f"SELECT PlayingAs FROM UserData WHERE GuildID == {guild_id} AND UserID == {player_id} LIMIT 1")
 
-		char_nickname = cs.fetchone()[0]
-		has_char = char_nickname is not None
+		try:
+			char_nickname = cs.fetchone()[0]
+			has_char = char_nickname is not None
 
-		if (has_char == False):
-			await ctx.send("You are not currently playing a character on this server!")
+			if (has_char == False):
+				await ctx.send("You are not currently playing a character on this server!")
+				cont = False
+
+		except AttributeError:
+			await ctx.send("You are not currently playing a character on this server! If you should be, contact an administrator to set one up.")
+			cont = False
+
+		except TypeError:
+			await ctx.send("You are not currently playing a character on this server! If you should be, contact an administrator to set one up.")
 			cont = False
 
 		# See if there are any gacha items set up. If none, don't continue.

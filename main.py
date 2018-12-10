@@ -54,14 +54,14 @@ def main():
 		
 		elif isinstance(error, commands.BotMissingPermissions):
 			await ctx.send("My highest role does not have permissions to use this command!")
-		
+
 		else:
 			guild_id = ctx.guild.id
 			channel_id = ctx.message.channel.id
 			user_id = ctx.message.author.id
 			message = ctx.message.content
 
-			error_message = f"**[ERROR]** \n**GuildID**: {guild_id} \n**ChannelID**: {channel_id} \n**UserID**: {user_id} \n**Command Attempted**: {message} \n**ErrorType**: {type(error)} \n**Error**: {error}"
+			error_message = f"**[ERROR]** \n**GuildID**: {guild_id} \n**ChannelID**: {channel_id} \n**UserID**: {user_id} \n**Command Attempted**: {message} \n**ErrorType**: {type(error)} \n**Error**: {error}\n--------------------------------------------"
 
 			# DM error message to bot owner
 			user = bot.get_user(owner_id)

@@ -202,7 +202,12 @@ class Character_Management:
 			cont = True
 			while (cont):
 				user_selection = await self.bot.wait_for("message", check=pred, timeout=60)
-				user_selection = int(user_selection.content)
+
+				try:
+					user_selection = int(user_selection.content)
+				except ValueError:
+					await ctx.send("You did not input a number!")
+					user_selection = 16
 
 				# And this is where I lament the absence of switch statements in Python
 

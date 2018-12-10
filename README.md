@@ -16,7 +16,7 @@ To view this README, use:
 
 This bot functions on the premise that admin will set up each player with a character. Multiple characters can be assigned to one user, with the most recently made one automatically being assigned. Upon initiation, the character is assigned a unique nickname for look-up purposes. This is to accomodate repeated names, and so that long names do not need to be fully typed. In most cases, the nickname will just be the character's first name.
 
-To use every feature of UA, the bot's highest role will need the following permissions: (TODO: Better handling of BotMissingPermissions error)
+To use every feature of UA, the bot's highest role will need the following permissions: (TODO: Better handling of BotMissingPermissions error). To use certain set-up commands, the user will need a role with Admin permissions.
 
 ```
 Manage Roles
