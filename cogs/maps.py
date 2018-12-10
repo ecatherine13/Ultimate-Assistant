@@ -209,7 +209,11 @@ class Maps:
 		# Check if user is a player
 		if (cont):
 			cs.execute(f"SELECT PlayingAs FROM UserData WHERE GuildID == {ctx.guild.id} AND UserID == {ctx.message.author.id} LIMIT 1")
-			is_player = cs.fetchone()[0] is not None
+
+			try:
+				is_player = cs.fetchone()[0] is not None
+			except TypeError:
+				is_player = False
 
 			if not (is_player):
 				await ctx.send(f"You are not a player on {ctx.guild}!")

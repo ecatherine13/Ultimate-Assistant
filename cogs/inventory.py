@@ -45,16 +45,21 @@ class Inventory:
 	@commands.command(name="playing_as", aliases=["iam", "my_char", "mc"], help="View who you're playing as")
 	async def playing_as(self, ctx):
 		cs.execute(f"SELECT * FROM UserData WHERE GuildID == {ctx.guild.id} AND UserID == {ctx.message.author.id} LIMIT 1")
-		char_nickname = cs.fetchone()[2]
 
-		if(char_nickname == None):
+		try:
+			char_nickname = cs.fetchone()[2]
+
+			if(char_nickname == None):
+				await ctx.send("You do not have a character set up! If you should, contact an admin.")
+			else:
+				# Get the character name by GuildID, UserID, and Nickname
+				cs.execute(f"SELECT * FROM Characters WHERE GuildID == {ctx.guild.id} AND PlayerID == {ctx.message.author.id} AND CharNickname == ? LIMIT 1", (f"{char_nickname}",))
+
+				char_name = cs.fetchone()[2]
+				await ctx.send(f"{ctx.message.author} is playing as {char_name}!")
+
+		except TypeError:
 			await ctx.send("You do not have a character set up! If you should, contact an admin.")
-		else:
-			# Get the character name by GuildID, UserID, and Nickname
-			cs.execute(f"SELECT * FROM Characters WHERE GuildID == {ctx.guild.id} AND PlayerID == {ctx.message.author.id} AND CharNickname == ? LIMIT 1", (f"{char_nickname}",))
-
-			char_name = cs.fetchone()[2]
-			await ctx.send(f"{ctx.message.author} is playing is {char_name}!")
 
 	# Switch the character you're playing as. Very situational, like NPCs
 	@commands.command(name="set_char", aliases=["setchar"], help="Switch your 'playing as' character. Very situational.")
@@ -83,12 +88,18 @@ class Inventory:
 
 			await ctx.send("Enter a number: ")
 			entry_num = await self.bot.wait_for('message', check=pred, timeout=60)
-			char_to_set = char_entries[int(entry_num.content)]
 
-			cs.execute(f"UPDATE UserData SET PlayingAs = ? WHERE GuildID == {guild_id} AND UserID == {player_id}", (f"{char_to_set[1]}",))
-			conn.commit()
+			try:
+				char_to_set = char_entries[int(entry_num.content)]
 
-			await ctx.send(f"{ctx.message.author} is now playing as {char_to_set[0]}!")
+				cs.execute(f"UPDATE UserData SET PlayingAs = ? WHERE GuildID == {guild_id} AND UserID == {player_id}", (f"{char_to_set[1]}",))
+				conn.commit()
+
+				await ctx.send(f"{ctx.message.author} is now playing as {char_to_set[0]}!")
+			except IndexError:
+				await ctx.send("You did not enter a valid number!")
+			except ValueError:
+				await ctx.send("That is not a number!")
 
 	# Embed inventory. Returns embed
 	def embed_inventory(self, guild_id, char_nickname):
@@ -139,46 +150,51 @@ class Inventory:
 
 		# First, check for a character
 		cs.execute(f"SELECT * FROM UserData WHERE GuildID == {guild_id} AND UserID == {player_id} LIMIT 1")
-		char_nickname = cs.fetchone()[2]
 
-		if(char_nickname == None):
+		try:
+			char_nickname = cs.fetchone()[2]
+
+			if(char_nickname == None):
+				await ctx.send("You do not have a character set up!")
+			else:
+				# Get the character name by GuildID, UserID, and Nickname
+				cs.execute(f"SELECT * FROM Characters WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ? LIMIT 1", (f"{char_nickname}",))
+
+				char_entry = cs.fetchone()
+
+				char_name = char_entry[2]
+				inventory_json_str = str(char_entry[17])
+				inventory = json.loads(inventory_json_str) # Dictionary object
+
+				cont = True
+
+				# Loops through the inventory because the names may contain a trailing ' (xn)'
+				for item_name_full in inventory:
+					item_name_base_inv = self.item_to_base(item_name_full)
+
+					# Item exists. Prevents duplicates based on case sensitivity.
+					if (item_name_base.lower() == item_name_base_inv.lower()):
+						new_item_name_full = self.get_item_str(item_name_full, increase=True)
+						print(new_item_name_full)
+						inventory[new_item_name_full] = inventory[item_name_full]
+						del inventory[item_name_full]
+						cont = False
+						break
+
+				if (cont): # Item wasn't in inventory
+					inventory[item_name_base] = description
+
+				# Dump to JSON
+				json_dict_str = str(json.dumps(inventory))
+
+				# Update entry
+				cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
+				conn.commit()
+
+				await ctx.send(f"{char_name} takes {item_name_base}.")
+
+		except TypeError:
 			await ctx.send("You do not have a character set up!")
-		else:
-			# Get the character name by GuildID, UserID, and Nickname
-			cs.execute(f"SELECT * FROM Characters WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ? LIMIT 1", (f"{char_nickname}",))
-
-			char_entry = cs.fetchone()
-
-			char_name = char_entry[2]
-			inventory_json_str = str(char_entry[17])
-			inventory = json.loads(inventory_json_str) # Dictionary object
-
-			cont = True
-
-			# Loops through the inventory because the names may contain a trailing ' (xn)'
-			for item_name_full in inventory:
-				item_name_base_inv = self.item_to_base(item_name_full)
-
-				# Item exists. Prevents duplicates based on case sensitivity.
-				if (item_name_base.lower() == item_name_base_inv.lower()):
-					new_item_name_full = self.get_item_str(item_name_full, increase=True)
-					print(new_item_name_full)
-					inventory[new_item_name_full] = inventory[item_name_full]
-					del inventory[item_name_full]
-					cont = False
-					break
-
-			if (cont): # Item wasn't in inventory
-				inventory[item_name_base] = description
-
-			# Dump to JSON
-			json_dict_str = str(json.dumps(inventory))
-
-			# Update entry
-			cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
-			conn.commit()
-
-			await ctx.send(f"{char_name} takes {item_name_base}.")
 
 	# Removing an item. TODO Allow null input for numbered list
 	@commands.command(name="drop", help="Remove an item from inventory by name.")
@@ -188,48 +204,52 @@ class Inventory:
 
 		# First, check for a character
 		cs.execute(f"SELECT * FROM UserData WHERE GuildID == {guild_id} AND UserID == {player_id} LIMIT 1")
-		char_nickname = cs.fetchone()[2]
+		try:
+			char_nickname = cs.fetchone()[2]
 
-		if(char_nickname == None):
-			await ctx.send("You do not have a character set up!")
-		else:
-			# Get the character name by GuildID, UserID, and Nickname
-			cs.execute(f"SELECT * FROM Characters WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ? LIMIT 1", (f"{char_nickname}",))
+			if(char_nickname == None):
+				await ctx.send("You do not have a character set up!")
+			else:
+				# Get the character name by GuildID, UserID, and Nickname
+				cs.execute(f"SELECT * FROM Characters WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ? LIMIT 1", (f"{char_nickname}",))
 
-			char_entry = cs.fetchone()
+				char_entry = cs.fetchone()
 
-			char_name = char_entry[2]
-			inventory_json_str = str(char_entry[17])
-			inventory = json.loads(inventory_json_str) # Dictionary object
-			
-			cont = True
+				char_name = char_entry[2]
+				inventory_json_str = str(char_entry[17])
+				inventory = json.loads(inventory_json_str) # Dictionary object
+				
+				cont = True
 
-			# Loops through the inventory because the names may contain a trailing ' (xn)'
-			for item_name_full in inventory:
-				item_name_base_inv = self.item_to_base(item_name_full)
+				# Loops through the inventory because the names may contain a trailing ' (xn)'
+				for item_name_full in inventory:
+					item_name_base_inv = self.item_to_base(item_name_full)
 
-				# Item exists
-				if (item_name_base.lower() == item_name_base_inv.lower()):
-					new_item_name_full = self.get_item_str(item_name_full, increase=False)
+					# Item exists
+					if (item_name_base.lower() == item_name_base_inv.lower()):
+						new_item_name_full = self.get_item_str(item_name_full, increase=False)
 
-					if (new_item_name_full): # Not Null
-						inventory[new_item_name_full] = inventory[item_name_full]
+						if (new_item_name_full): # Not Null
+							inventory[new_item_name_full] = inventory[item_name_full]
 
-					del inventory[item_name_full]
+						del inventory[item_name_full]
 
-					# Update entry
-					json_dict_str = str(json.dumps(inventory))
-					cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
-					conn.commit()
+						# Update entry
+						json_dict_str = str(json.dumps(inventory))
+						cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND PlayerID == {player_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname}"))
+						conn.commit()
 
-					await ctx.send(f"{char_name} drops {item_name_base}.")
-					
+						await ctx.send(f"{char_name} drops {item_name_base}.")
+						
+						cont = False
+						break
+
+				if (cont): # Item wasn't in inventory
+					await ctx.send(f"{char_name} does not have that in their inventory!")
 					cont = False
-					break
 
-			if (cont): # Item wasn't in inventory
-				await ctx.send(f"{char_name} does not have that in their inventory!")
-				cont = False
+		except TypeError:
+			await ctx.send("You do not have a character set up!")
 
 	# Viewing inventory. 25 items per embed
 	@commands.command(name="inventory", aliases=["items"], help="View your inventory")
@@ -239,17 +259,20 @@ class Inventory:
 
 		# First, check for a character
 		cs.execute(f"SELECT * FROM UserData WHERE GuildID == {guild_id} AND UserID == {player_id} LIMIT 1")
-		char_nickname = cs.fetchone()[2]
+		try:
+			char_nickname = cs.fetchone()[2]
 
-		if(char_nickname == None):
-			await ctx.send("You do not have a character set up!")
-		else:
-			
-			embeds = self.embed_inventory(guild_id, char_nickname)
+			if(char_nickname == None):
+				await ctx.send("You do not have a character set up!")
+			else:
+				
+				embeds = self.embed_inventory(guild_id, char_nickname)
 
-			# Send
-			for embed in embeds:
-				await ctx.send(embed=embed)
+				# Send
+				for embed in embeds:
+					await ctx.send(embed=embed)
+		except TypeError:
+			await ctx.send("You do not have a character set up!")			
 
 	# Give and take commands for admins
 	@commands.command(name="give", aliases=["give_item"], help="Add an item to any character's inventory.")
