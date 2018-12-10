@@ -229,7 +229,8 @@ class Investigation:
 
 					# If user was first to find it, note it
 					if obj_str[2] == 0: # First
-						cs.execute(f"UPDATE Investigations ")
+						cs.execute(f"UPDATE Investigations SET Found = 1, FirstFinderID = {player_id} WHERE ItemNames == ? AND ItemInfo == ? AND ChannelID == {channel_id}", (f"{obj_str[0]}", f"{obj_str[1]}"))
+					conn.commit()
 
 					break
 
