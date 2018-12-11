@@ -3,6 +3,7 @@ from discord.ext import commands
 from .config import *
 import re
 import random
+import asyncio
 
 class Admin:
 	def __init__(self, bot):
@@ -29,6 +30,7 @@ class Admin:
 			# Only display roles lower than bot's highest role
 
 			bot_member= discord.utils.get(guild.members, id=self.bot.user.id)
+
 			bot_highest_role = bot_member.roles[-1]
 
 			# await ctx.send(bot_highest_role_id)
@@ -42,19 +44,26 @@ class Admin:
 				embed.add_field(name="Enter a number to set auto role (enter 0 for @everyone):", value=embed_str)
 				await ctx.send(embed=embed)
 
-				role_idx = await self.bot.wait_for('message', check=pred, timeout=60)
 				try:
-					role_id = guild_roles[int(role_idx.content)].id
-					cs.execute(f"UPDATE GuildData SET AutoRole = {role_id} WHERE GuildID = {guild.id}")
-					conn.commit()
-					await ctx.send(f"Set Auto Role to {guild_roles[int(role_idx.content)].name}")
-				except:
-					await ctx.send("Not a valid input!")
+					role_idx = await self.bot.wait_for('message', check=pred, timeout=60)
+
+					try:
+						role_id = guild_roles[int(role_idx.content)].id
+						cs.execute(f"UPDATE GuildData SET AutoRole = {role_id} WHERE GuildID = {guild.id}")
+						conn.commit()
+						await ctx.send(f"Set Auto Role to {guild_roles[int(role_idx.content)].name}")
+					except:
+						await ctx.send("Not a valid input!")
+						
+				except asyncio.TimeoutError:
+					await ctx.send("Time expired! Please try again.")
 			
 			else:
 				await ctx.send("Bot needs a role to use this command!")
 
 		else:
+
+			# Bot has no role, check
 			regex = "<@&?([0-9]{18})>"
 
 			role_id_str = re.findall(regex, role)
@@ -78,6 +87,8 @@ class Admin:
 		def pred(msg):
 			return msg.author == ctx.message.author and msg.channel == ctx.message.channel
 
+		cont = True
+
 		guild_id = ctx.guild.id
 		
 		# Get current timezone
@@ -92,28 +103,33 @@ class Admin:
 			else:
 				await ctx.send(f"Current timezone for {ctx.guild} is **UTC+{current_timezone}**. \nEnter a new number (ex. 1, -5, +3)")
 
-			new_timezone = await self.bot.wait_for('message', check=pred, timeout=60)
-			new_timezone = new_timezone.content
+			try:
+				new_timezone = await self.bot.wait_for('message', check=pred, timeout=60)
+				new_timezone = new_timezone.content
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
 
 		# Check new_timezone validity
-		try:
-			new_timezone = int(new_timezone)
+		if (cont):
+			try:
+				new_timezone = int(new_timezone)
 
-			# Timezones can only go from UTC-12 to UTC+14
-			if (new_timezone < -12 or 14 < new_timezone):
-				await ctx.send("You must enter a number between -12 and +14. Please try again.")
-			
-			else:
-				# Set in DB
-				cs.execute(f"UPDATE GuildData SET Timezone = {new_timezone} WHERE GuildID == {ctx.guild.id}")
-				conn.commit()
+				# Timezones can only go from UTC-12 to UTC+14
+				if (new_timezone < -12 or 14 < new_timezone):
+					await ctx.send("You must enter a number between -12 and +14. Please try again.")
+				
+				else:
+					# Set in DB
+					cs.execute(f"UPDATE GuildData SET Timezone = {new_timezone} WHERE GuildID == {ctx.guild.id}")
+					conn.commit()
 
-				# TODO adjust Announcements for new timezone?
+					# TODO adjust Announcements for new timezone?
 
-				await ctx.send(f"Set timezone for {ctx.guild}!")
+					await ctx.send(f"Set timezone for {ctx.guild}!")
 
-		except:
-			await ctx.send("That is not a valid number!")
+			except:
+				await ctx.send("That is not a valid number!")
 	
 	# Toggle anon dms
 	@commands.command(name="toggle_adm", help="Toggle the anonymous DM feature. By default, it's set to OFF.")

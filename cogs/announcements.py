@@ -3,6 +3,7 @@ from discord.ext import commands
 from .config import *
 import re
 import datetime
+import asyncio
 
 class Announcements:
 	def __init__(self, bot):
@@ -44,12 +45,16 @@ class Announcements:
 		# Obtains str message
 		if (cont):
 			await ctx.send(f"Setting up message to post in {channel}. \nEnter message:")
-			message = await self.bot.wait_for('message', check=pred, timeout=60)
 
-			message = message.content
+			try:
+				message = await self.bot.wait_for('message', check=pred, timeout=60)
+				message = message.content
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again")
+				cont = False
 
 			# Message must be within Discord limits
-			if (len(message) > 2000):
+			if (cont and len(message) > 2000):
 				await ctx.send(f"That message is {str(len(message) - 2000)} characters too long! Please try again.")
 				cont = False
 
@@ -68,9 +73,13 @@ class Announcements:
 
 			# Set the start date.
 			await ctx.send(time_server.strftime("It is currently **%Y-%m-%d, %H:%M** in the server timezone. \nEnter the date you would like this message to begin. (yyyy-mm-dd)"))
+			try:
+				start_date = await self.bot.wait_for('message', check=pred, timeout=60)
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
 
-			start_date = await self.bot.wait_for('message', check=pred, timeout=60)
-
+		if (cont):
 			date_match = re.search(r'^([0-9]{4})-([0-9]{2})-([0-9]{2})$', start_date.content)
 
 			# Check input (date)
@@ -97,8 +106,13 @@ class Announcements:
 			# Set the start time.
 			await ctx.send(time_server.strftime("Enter a start time in 24-hr format. Only times on the half hour (00, 30) will be accepted. (hh:mm)"))
 
-			start_time = await self.bot.wait_for('message', check=pred, timeout=60)
+			try:
+				start_time = await self.bot.wait_for('message', check=pred, timeout=60)
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
 
+		if (cont):
 			time_match = re.search(r'^([0-9]{2}):(00|30)$', start_time.content)
 
 			# Check input (time)
@@ -122,8 +136,14 @@ class Announcements:
 		# Obtains int interval
 		if (cont):
 			await ctx.send("Set an interval (hours):")
-			interval = await self.bot.wait_for('message', check=pred, timeout=60)
 
+			try:
+				interval = await self.bot.wait_for('message', check=pred, timeout=60)
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
+
+		if (cont):
 			interval_match = re.search(r'^([0-9]*)$', interval.content)
 
 			# Check input (time)
@@ -145,8 +165,14 @@ class Announcements:
 
 			# Ask for confirmation
 			await ctx.send("Are you happy with this? (y/n)")
-			confirm = await self.bot.wait_for('message', check=pred, timeout=60)
 
+			try:
+				confirm = await self.bot.wait_for('message', check=pred, timeout=60)
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
+
+		if (cont):
 			if (confirm.content.lower() == 'y' or confirm.content.lower() == "yes"):
 				
 				# Convert datetime start_time to utc using guild_timezone_offset, and to an integer
@@ -213,9 +239,14 @@ class Announcements:
 
 		# Get and check user input
 		await ctx.send("Enter a number, or a list of comma separated numbers: (ex. 1, 3, 10)")
-		entry = await self.bot.wait_for('message', check=pred, timeout=60)
-		entry = entry.content
-		idx_to_delete_strs = entry.split(',')
+
+		try:
+			entry = await self.bot.wait_for('message', check=pred, timeout=60)
+			entry = entry.content
+			idx_to_delete_strs = entry.split(',')
+		except asyncio.TimeoutError:
+			await ctx.send("Timer expired! Please try again.")
+			idx_to_delete_strs = []
 
 		for idx_str in idx_to_delete_strs:
 

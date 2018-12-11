@@ -4,6 +4,7 @@ from .config import *
 import re
 import random
 import json
+import asyncio
 
 class Maps:
 	def __init__(self, bot):
@@ -85,13 +86,18 @@ class Maps:
 				cont = False
 			
 		# Ask for list of channels that lead to destination. If none (can be accessed from any channel), enter 'X'
+		valid_channels = []
 		if (cont):
-			valid_channels = []
 			await ctx.send(f"Enter a channel, or comma separated list of outgoing channels from {channel}. If none, enter 'X'.")
 
-			outgoing_channels = await self.bot.wait_for('message', check=pred, timeout=60)
-			outgoing_channels = [x.strip() for x in outgoing_channels.content.split(',')]
-			
+			try:
+				outgoing_channels = await self.bot.wait_for('message', check=pred, timeout=60)
+				outgoing_channels = [x.strip() for x in outgoing_channels.content.split(',')]
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				outgoing_channels = []
+				cont = False
+
 			for channel in outgoing_channels:
 				if(channel.lower() == 'x'):
 					await ctx.send("Exiting without adding any connections.")
@@ -135,7 +141,13 @@ class Maps:
 
 				# Ask if the connection is two-way
 				await ctx.send(f"Connected #{channel_obj} -> #{outgoing_channel_obj}. Is this a two way connection? (y/n)")
-				response = await self.bot.wait_for('message', check=pred, timeout=60)
+
+				try:
+					response = await self.bot.wait_for('message', check=pred, timeout=60)
+				except asyncio.TimeoutError:
+					await ctx.send("Timer expired!")
+					response = "n"
+					cont = False
 
 				if (response.content.lower() == 'y' or response.content.lower() == 'yes'):
 					cs.execute(f"SELECT OutgoingConnections from Maps WHERE ChannelID == {outgoing_channel_id} LIMIT 1")
@@ -306,10 +318,16 @@ class Maps:
 
 		# Get Role
 		cs.execute(f"SELECT EntryChannel FROM GuildData WHERE GuildID == {ctx.guild.id} LIMIT 1")
-		entry_channel_id = cs.fetchone()[0]
 
-		if (entry_channel_id == None):
-			await ctx.send("You have not set an entry point or the server's map! Use `!setsp <channel_tag>` to do so.")
+		try:
+			entry_channel_id = cs.fetchone()[0]
+
+			if (entry_channel_id == None):
+				await ctx.send("You have not set an entry point or the server's map! Use `!setsp <channel_tag>` to do so.")
+				cont = False
+				
+		except TypeError:
+			await ctx.send("You do not have a starting channel set up! Use `setsp #channel-tag` to make one.")
 			cont = False
 
 		if (cont):

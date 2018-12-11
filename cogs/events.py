@@ -52,7 +52,10 @@ class Events:
 		# Assign autorole if one is set up
 		role_cs = cs.execute(f"SELECT AutoRole FROM GuildData WHERE GuildID={ctx.guild.id} LIMIT 1")
 		
-		role_id = role_cs.fetchone()[0]
+		try:
+			role_id = role_cs.fetchone()[0]
+		except:
+			role_id = None
 
 		if(role_id != None):
 			role = discord.utils.get(ctx.guild.roles, id=role_id)
