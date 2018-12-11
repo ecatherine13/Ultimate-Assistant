@@ -4,7 +4,8 @@ from .config import *
 import json
 import random
 import re
-# from .utils import *
+import asyncio
+
 class Inventory:
 	def __init__(self, bot):
 		self.bot = bot
@@ -82,24 +83,31 @@ class Inventory:
 		if (embed_str == ''):
 			await ctx.send("You do not have any characters set up on this server! If you should, contact an admin to set one up.")
 		else:
+			cont = True
 			color = int("%06x" % random.randint(0, 0xFFFFFF), 16)
 			embed = discord.Embed(title=f"Characters played by {ctx.message.author} on {ctx.guild}", color=color, description=embed_str)
 			await ctx.send(embed=embed)
 
 			await ctx.send("Enter a number: ")
-			entry_num = await self.bot.wait_for('message', check=pred, timeout=60)
 
 			try:
-				char_to_set = char_entries[int(entry_num.content)]
+				entry_num = await self.bot.wait_for('message', check=pred, timeout=60)
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
 
-				cs.execute(f"UPDATE UserData SET PlayingAs = ? WHERE GuildID == {guild_id} AND UserID == {player_id}", (f"{char_to_set[1]}",))
-				conn.commit()
+			if (cont):
+				try:
+					char_to_set = char_entries[int(entry_num.content)]
 
-				await ctx.send(f"{ctx.message.author} is now playing as {char_to_set[0]}!")
-			except IndexError:
-				await ctx.send("You did not enter a valid number!")
-			except ValueError:
-				await ctx.send("That is not a number!")
+					cs.execute(f"UPDATE UserData SET PlayingAs = ? WHERE GuildID == {guild_id} AND UserID == {player_id}", (f"{char_to_set[1]}",))
+					conn.commit()
+
+					await ctx.send(f"{ctx.message.author} is now playing as {char_to_set[0]}!")
+				except IndexError:
+					await ctx.send("You did not enter a valid number!")
+				except ValueError:
+					await ctx.send("That is not a number!")
 
 	# Embed inventory. Returns embed
 	def embed_inventory(self, guild_id, char_nickname):
@@ -299,44 +307,58 @@ class Inventory:
 				await ctx.send(embed=embed)
 
 			# Take input
+			cont = True
+
 			await ctx.send(f"Enter an item to give {char_entry[2]}:")
-			item_name = await self.bot.wait_for('message', check=pred, timeout=60)
-			item_name_base = item_name.content
 
-			await ctx.send(f"Enter a description for {item_name_base}:")
-			description = await self.bot.wait_for('message', check=pred, timeout=60)
-			description = description.content
+			try:
+				item_name = await self.bot.wait_for('message', check=pred, timeout=60)
+				item_name_base = item_name.content
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
 
-			inventory_json_str = str(char_entry[17])
-			inventory = json.loads(inventory_json_str) # Dictionary object
+			if (cont):
+				await ctx.send(f"Enter a description for {item_name_base}:")
+
+				try:
+					description = await self.bot.wait_for('message', check=pred, timeout=60)
+					description = description.content
+				except asyncio.TimeoutError:
+					await ctx.send("Timer expired! Please try again.")
+					cont = False
+
+			if (cont):
+				inventory_json_str = str(char_entry[17])
+				inventory = json.loads(inventory_json_str) # Dictionary object
 			
 			# Almost copy pasted code from !take. Should be modularized but I'm lazy
 
-			cont = True
-
 			# Loops through the inventory because the names may contain a trailing ' (xn)'
-			for item_name_full in inventory:
-				item_name_base_inv = self.item_to_base(item_name_full)
+			if (cont):
+				for item_name_full in inventory:
+					item_name_base_inv = self.item_to_base(item_name_full)
 
-				# Item exists. Prevents duplicates based on case sensitivity.
-				if (item_name_base.lower() == item_name_base_inv.lower()):
-					new_item_name_full = self.get_item_str(item_name_full, increase=True)
-					inventory[new_item_name_full] = inventory[item_name_full]
-					del inventory[item_name_full]
-					cont = False
-					break
+					# Item exists. Prevents duplicates based on case sensitivity.
+					if (item_name_base.lower() == item_name_base_inv.lower()):
+						new_item_name_full = self.get_item_str(item_name_full, increase=True)
+						inventory[new_item_name_full] = inventory[item_name_full]
+						del inventory[item_name_full]
+						cont = False
+						break
 
 			if (cont): # Item wasn't in inventory
 				inventory[item_name_base] = description
 
-			# Dump to JSON
-			json_dict_str = str(json.dumps(inventory))
+			if (cont):
+				# Dump to JSON
+				json_dict_str = str(json.dumps(inventory))
 
-			# Update entry
-			cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname.title()}"))
-			conn.commit()
+				# Update entry
+				cs.execute(f"UPDATE Characters SET Inventory = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{json_dict_str}", f"{char_nickname.title()}"))
+				conn.commit()
 
-			await ctx.send(f"{item_name_base} given to {char_entry[2]}.")
+				await ctx.send(f"{item_name_base} given to {char_entry[2]}.")
 
 	@commands.command(name="confiscate", aliases=["take_from", "takefrom"], help="Take an item from any character's inventory.")
 	@commands.has_permissions(administrator=True)
@@ -361,19 +383,26 @@ class Inventory:
 
 			# Get input
 			await ctx.send("Enter an item name to remove:")
-			item_to_remove = await self.bot.wait_for('message', check=pred, timeout=60)
-			item_name_base = item_to_remove.content
 
-			# Set up things
-			char_name = char_entry[2]
-			inventory_json_str = str(char_entry[17])
-			inventory = json.loads(inventory_json_str) # Dictionary object
-			
+			try:
+				item_to_remove = await self.bot.wait_for('message', check=pred, timeout=60)
+				item_name_base = item_to_remove.content
+
+				# Set up things
+				char_name = char_entry[2]
+				inventory_json_str = str(char_entry[17])
+				inventory = json.loads(inventory_json_str) # Dictionary object
+
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				inventory = []
+				
+			cont = False
 			# More or less copy-pasted from !drop because I'm too dumb to modularize
-			cont = True
 
 			# Loops through the inventory because the names may contain a trailing ' (xn)'
 			for item_name_full in inventory:
+				cont = True
 				item_name_base_inv = self.item_to_base(item_name_full)
 
 				# Item exists

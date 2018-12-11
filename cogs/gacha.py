@@ -4,6 +4,7 @@ from .config import *
 import re
 import random
 import json
+import asyncio
 
 class Gacha:
 	def __init__(self, bot):
@@ -95,13 +96,25 @@ class Gacha:
 		if (cont):
 
 			await ctx.send(f"Enter a description for {item_name}:")
-			description = await self.bot.wait_for('message', check=pred, timeout=60)
-			description = description.content
 
+			try:
+				description = await self.bot.wait_for('message', check=pred, timeout=60)
+				description = description.content
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
+
+		if (cont):
 			await ctx.send(f"Enter an image URL for {item_name}. If none, enter anything ('.', 'n/a', etc).")
-			image_url = await self.bot.wait_for('message', check=pred, timeout=60)
-			image_url = image_url.content
 
+			try:
+				image_url = await self.bot.wait_for('message', check=pred, timeout=60)
+				image_url = image_url.content
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
+
+		if (cont):
 			# Add to db
 			cs.execute(f"INSERT INTO Gacha (GuildID, ItemName, Description, ImageURL) VALUES ({guild_id}, ?, ?, ?)", (f"{item_name}", f"{description}", f"{image_url}"))
 			conn.commit()
@@ -128,10 +141,15 @@ class Gacha:
 
 		# Get and check user input
 		await ctx.send("Enter a number, or a list of comma separated numbers: (ex. 1, 3, 10) \nEnter 'X' to exit without deleting.")
-		entry = await self.bot.wait_for('message', check=pred, timeout=60)
-		entry = entry.content
-		idx_to_delete_strs = entry.split(',')
 
+		try:
+			entry = await self.bot.wait_for('message', check=pred, timeout=60)
+			entry = entry.content
+			idx_to_delete_strs = entry.split(',')
+		except asyncio.TimeoutError:
+			await ctx.send("Timer expired! Please try again.")
+			idx_to_delete_strs = []
+				
 		for idx_str in idx_to_delete_strs:
 
 			cont = True

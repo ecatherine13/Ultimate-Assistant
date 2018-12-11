@@ -3,6 +3,7 @@ from discord.ext import commands
 from .config import *
 import re
 import random
+import asyncio
 
 class Character_Management:
 	def __init__(self, bot):
@@ -105,47 +106,54 @@ class Character_Management:
 
 		await ctx.send(embed=embed)
 
-		nickname = await self.bot.wait_for('message', check=pred, timeout=60)
-		nickname = nickname.content
+		cont = True
+
+		try:
+			nickname = await self.bot.wait_for('message', check=pred, timeout=60)
+			nickname = nickname.content
+		except asyncio.TimeoutError:
+			await ctx.send("Timer expired! Please try again.")
+			cont = False
 
 		# Add to db
-		regex = "<@!?([0-9]{18})>" # user id capture
+		if (cont):
+			try:
+				regex = "<@!?([0-9]{18})>" # user id capture
 
-		player_id_str = re.findall(regex, player)
-		player_id = int(player_id_str[0])
+				player_id_str = re.findall(regex, player)
+				player_id = int(player_id_str[0])
+			except:
+				await ctx.send("Something went wrong! Did you ping the player? `!nc @Player Character Name`")
+				cont = False
+		
+		if (cont):
+			guild_id = ctx.guild.id
 
-		guild_id = ctx.guild.id
+			# If player is not in table (first character), add them
+			cs.execute(f"SELECT 1 FROM UserData WHERE GuildID == {guild_id} AND UserID == {player_id} LIMIT 1")
 
-		# If player is not in table (first character), add them
-		cs.execute(f"SELECT 1 FROM UserData WHERE GuildID == {guild_id} AND UserID == {player_id} LIMIT 1")
+			player_in_db = cs.fetchone() is not None
 
-		player_in_db = cs.fetchone() is not None
+			if (player_in_db == False):
+				cs.execute(f"INSERT INTO UserData (GuildID, UserID) VALUES ({guild_id}, {player_id})")
 
-		if (player_in_db == False):
-			cs.execute(f"INSERT INTO UserData (GuildID, UserID) VALUES ({guild_id}, {player_id})")
+			# Check if it already exists. This also prevents two characters with the same nickname in one guild
+			cs.execute(f"SELECT 1 FROM Characters WHERE GuildID == {guild_id} AND CharNickname == ? LIMIT 1", (f"{nickname.title()}",))
 
-		# Check if it already exists. This also prevents two characters with the same nickname in one guild
-		cs.execute(f"SELECT 1 FROM Characters WHERE GuildID == {guild_id} AND CharNickname == ? LIMIT 1", (f"{nickname.title()}",))
+			char_in_db = cs.fetchone() is not None
 
-		char_in_db = cs.fetchone() is not None
+			if (char_in_db == True):
+				await ctx.send("You have already set up a character with that nickname! Please try again.")
+			else:
+				# Add to db
+				cs.execute(f"INSERT INTO Characters (GuildID, PlayerID, CharName, CharNickname) VALUES ({guild_id}, {player_id}, ?, ?)", (f"{char_name}", f"{nickname.title()}"))
+				
+				# Assign to player (GuildID, UserID -> ActiveChar = 'Nickname')
+				cs.execute(f"UPDATE UserData SET PlayingAs = ? WHERE GuildID == {guild_id} AND UserID == {player_id}", (f"{nickname.title()}",))
 
-		if (char_in_db == True):
-			await ctx.send("You have already set up a character with that nickname! Please try again.")
-		else:
-			# Add to db
-			cs.execute(f"INSERT INTO Characters (GuildID, PlayerID, CharName, CharNickname) VALUES ({guild_id}, {player_id}, ?, ?)", (f"{char_name}", f"{nickname.title()}"))
-			
-			# Assign to player (GuildID, UserID -> ActiveChar = 'Nickname')
-			cs.execute(f"UPDATE UserData SET PlayingAs = ? WHERE GuildID == {guild_id} AND UserID == {player_id}", (f"{nickname.title()}",))
+				conn.commit()
 
-			conn.commit()
-
-			await ctx.send(f"{char_name} set, please use `!uc {nickname}` to add info.")
-
-	@new_char.error
-	async def new_char_error(self, ctx, error):
-		if isinstance(error, commands.CommandInvokeError):
-			await ctx.send("Something went wrong! Did you ping the player? `!new_char @Username Character Name`")
+				await ctx.send(f"{char_name} set, please use `!uc {nickname}` to add info.")
 
 	@commands.command(name="update_char", aliases=["updatechar", "uc"], help="Update  a single character's info")
 	@commands.has_permissions(administrator=True)
@@ -201,13 +209,18 @@ class Character_Management:
 			# Await user input on a loop
 			cont = True
 			while (cont):
-				user_selection = await self.bot.wait_for("message", check=pred, timeout=60)
+
+				try:
+					user_selection = await self.bot.wait_for("message", check=pred, timeout=60)
+				except asyncio.TimeoutError:
+					await ctx.send("Time expired! Please try again.")
+					break
 
 				try:
 					user_selection = int(user_selection.content)
 				except ValueError:
-					await ctx.send("You did not input a number!")
-					user_selection = 16
+					await ctx.send("You did not input a number! Enter a number: ")
+					continue
 
 				# And this is where I lament the absence of switch statements in Python
 
@@ -219,8 +232,12 @@ class Character_Management:
 				
 				elif (user_selection == 1): #Name
 					await ctx.send("Enter a new name:")
-					new_name = await self.bot.wait_for("message", check=pred, timeout=60)
 
+					try:
+						new_name = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET Charname = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{new_name.content}", f"{char_nickname.title()}"))
 					conn.commit()
@@ -229,7 +246,12 @@ class Character_Management:
 
 				elif (user_selection == 2): # Talent
 					await ctx.send("Enter a new talent:")
-					new_talent = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						new_talent = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET PublicTalent = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{new_talent.content}", f"{char_nickname.title()}"))
@@ -239,7 +261,12 @@ class Character_Management:
 
 				elif (user_selection == 3): # Age
 					await ctx.send("Enter a new age:")
-					new_age = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						new_age = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET CharAge = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{new_age.content}", f"{char_nickname.title()}"))
@@ -249,7 +276,12 @@ class Character_Management:
 
 				elif (user_selection == 4): # Birthday
 					await ctx.send("Enter a new birthday:")
-					new_bday = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						new_bday = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET CharBirthday = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{new_bday.content}", f"{char_nickname.title()}"))
@@ -259,7 +291,12 @@ class Character_Management:
 				
 				elif (user_selection == 5): # Height
 					await ctx.send("Enter a new height:")
-					new_height = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						new_height = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET CharHeight = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{new_height.content}", f"{char_nickname.title()}"))
@@ -269,7 +306,12 @@ class Character_Management:
 
 				elif (user_selection == 6): # Weight
 					await ctx.send("Enter a new weight:")
-					new_weight = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						new_weight = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET CharWeight = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{new_weight.content}", f"{char_nickname.title()}"))
@@ -279,7 +321,12 @@ class Character_Management:
 				
 				elif (user_selection == 7): # Chest
 					await ctx.send("Enter a new chest size:")
-					new_chest = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						new_chest = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET CharChest = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{new_chest.content}", f"{char_nickname.title()}"))
@@ -289,7 +336,12 @@ class Character_Management:
 
 				elif (user_selection == 8): # Likes
 					await ctx.send("Enter list of likes:")
-					likes = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						likes = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET Likes = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{likes.content}", f"{char_nickname.title()}"))
@@ -299,7 +351,12 @@ class Character_Management:
 
 				elif (user_selection == 9): # Dislikes
 					await ctx.send("Enter list of dislikes:")
-					dislikes = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						dislikes = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET Dislikes = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{dislikes.content}", f"{char_nickname.title()}"))
@@ -309,7 +366,12 @@ class Character_Management:
 
 				elif (user_selection == 10): # Public Appearance. Check length
 					await ctx.send("Enter a public appearance: (Cannot exceed 1024 characters!)")
-					appearance = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						appearance = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					if (len(appearance.content) <= 1024):
 						# Commit to DB
@@ -322,7 +384,12 @@ class Character_Management:
 				
 				elif (user_selection == 11): # Public Bio.
 					await ctx.send("Enter a public bio: (No character limit, but under 1024 is recommended.)")
-					bio = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						bio = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET PublicBio = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{bio.content}", f"{char_nickname.title()}"))
@@ -332,8 +399,12 @@ class Character_Management:
 									
 				elif (user_selection == 12): # Ref
 					await ctx.send("Enter an image url: (must be the url, not a pasted image)")
-					ref = await self.bot.wait_for("message", check=pred, timeout=60)
 
+					try:
+						ref = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 					# Commit to DB
 					cs.execute(f"UPDATE Characters SET RefURL = ? WHERE GuildID == {guild_id} AND CharNickname == ?", (f"{ref.content}", f"{char_nickname.title()}"))
 					conn.commit()
@@ -342,7 +413,12 @@ class Character_Management:
 
 				elif (user_selection == 13): # Nickname. Adjust char_nickname!
 					await ctx.send("Enter a new nickname:")
-					new_nickname = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						new_nickname = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					# Check if nickname already exists
 					cs.execute(f"SELECT 1 FROM Characters WHERE GuildID == {guild_id} AND CharNickname == ? LIMIT 1", (f"{new_nickname.content.title()}",))
@@ -367,7 +443,12 @@ class Character_Management:
 
 				elif (user_selection == 14): # Embed color. Check for validity.
 					await ctx.send("Enter a hex code (ex. #FF0000 or ff0000):")
-					hexcode = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						hexcode = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					hex_match = re.search(r'^#?((?:[0-9a-fA-F]{3}){1,2})$', hexcode.content)
 
@@ -382,7 +463,12 @@ class Character_Management:
 
 				elif (user_selection == 15): # Other
 					await ctx.send("Enter any extra info you wish: (Cannot exceed 1024 characters!)")
-					notes = await self.bot.wait_for("message", check=pred, timeout=60)
+
+					try:
+						notes = await self.bot.wait_for("message", check=pred, timeout=60)
+					except asyncio.TimeoutError:
+						await ctx.send("Time expired! Please try again.")
+						break
 
 					if(len(notes.content) <= 1024):
 						# Commit to DB
@@ -394,7 +480,7 @@ class Character_Management:
 						await ctx.send(f"That is {str(len(notes.content) - 1024)} characters too long! Input [15] to try again, or [16] to exit.")
 
 				else: # Invalid number
-					await ctx.send("Not a valid number!")
+					await ctx.send("Not a valid number! Try again: ")
 
 	@update_char.error
 	async def update_char_error(self, ctx, error):
@@ -451,8 +537,16 @@ class Character_Management:
 			# Await user input on a loop
 			cont = True
 			while (cont):
-				user_selection = await self.bot.wait_for("message", check=pred, timeout=60)
-				user_selection = int(user_selection.content)
+
+				try:
+					user_selection = await self.bot.wait_for("message", check=pred, timeout=60)
+					user_selection = int(user_selection.content)
+				except asyncio.TimeoutError:
+					await ctx.send("Timer expired! Please try again.")
+					break
+				except ValueError:
+					await ctx.send("That is not a number! Please enter an integer: ")
+					continue
 
 				# And this is where I lament the absence of switch statements in Python
 
@@ -540,12 +634,8 @@ class Character_Management:
 					await ctx.send("Done. Choose another field or finish with [14]")
 
 				else:
-					await ctx.send("Invalid input!")
-
-	@rem_char_info.error
-	async def rem_char_info_error(self, ctx, error):
-		if isinstance(error, commands.CommandInvokeError):
-			await ctx.send("Something went wrong! Did you enter a valid number?")
+					await ctx.send("Invalid input! Enter another number or finish with [14]:")
+					continue
 
 	@commands.command(name="nicknames", aliases=["lcn", "list_char_nicknmes", "names", "listnames", "listnicknames"], help="Get a list of characters in server with corresponding nicknames")
 	async def list_char_nicknames(self, ctx):
@@ -606,9 +696,16 @@ class Character_Management:
 
 			# Confirmation
 			await ctx.send(f"Are you sure you want to delete {char_entry[2]} from the server? (y/n)")
-			confirm = await self.bot.wait_for('message', check=pred, timeout=60)
 
-			if (confirm.content.lower() == 'y' or confirm.content.lower() == "yes"):
+			try:
+				confirm = await self.bot.wait_for('message', check=pred, timeout=60)
+				confirm = confirm.content
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired!")
+				confirm = "n"
+
+
+			if (confirm.lower() == 'y' or confirm.lower() == "yes"):
 				cs.execute(f"SELECT PlayerID FROM Characters WHERE GuildID == {guild_id} AND CharNickname == ? LIMIT 1", (f"{char_entry[3]}",))
 				player_id = cs.fetchone()[0]
 

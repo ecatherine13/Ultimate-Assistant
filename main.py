@@ -68,7 +68,7 @@ def main():
 			await user.send(error_message)
 
 			# Notify user
-			await ctx.send("Whoops! Something went wrong. Reminder that the timeout for all inputs is 60 s. An error report has been sent to the developer.")
+			await ctx.send("Whoops! Have you set up your characters with `!nc @Player Character Name`? An error report has been sent to the developer.")
 
 ###################################################################################	
 # Run bot	

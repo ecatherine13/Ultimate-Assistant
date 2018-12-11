@@ -6,6 +6,7 @@ import random
 import json
 import itertools
 import operator
+import asyncio
 
 class Investigation:
 	def __init__(self, bot):
@@ -81,10 +82,16 @@ class Investigation:
 		# Get list of names. Check for no repeats
 		if (cont):
 			await ctx.send("Enter a name for the object, or a comma separated list. (ex. 'curtain, curtains, blue curtains')")
-			names = await self.bot.wait_for('message', check=pred, timeout=60)
-			names = names.content.lower()
-			names = [x.strip() for x in names.split(',')] # returns array of strings
-			
+
+			try:
+				names = await self.bot.wait_for('message', check=pred, timeout=60)
+				names = names.content.lower()
+				names = [x.strip() for x in names.split(',')] # returns array of strings
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
+
+		if (cont):
 			# Now check that the channel doesn't have any repeated object names
 			for name_strs in all_names_strs:
 				names_json = json.loads(name_strs[0])
@@ -100,8 +107,13 @@ class Investigation:
 		# Get object description
 		if (cont):
 			await ctx.send("Enter a description for the object.")
-			description = await self.bot.wait_for('message', check=pred, timeout=60)
-			description = description.content
+
+			try:
+				description = await self.bot.wait_for('message', check=pred, timeout=60)
+				description = description.content
+			except asyncio.TimeoutError:
+				await ctx.send("Timer expired! Please try again.")
+				cont = False
 
 		# Add to db
 		if (cont):
@@ -139,9 +151,14 @@ class Investigation:
 
 		# Get input and delete corresponding items
 		await ctx.send("Enter a number, or a list of comma separated numbers: (ex. 1, 3, 10) \nEnter 'X' to exit without deleting.")
-		entry = await self.bot.wait_for('message', check=pred, timeout=60)
-		entry = entry.content
-		idx_to_delete_strs = entry.split(',')
+
+		try:
+			entry = await self.bot.wait_for('message', check=pred, timeout=60)
+			entry = entry.content
+			idx_to_delete_strs = entry.split(',')
+		except asyncio.TimeoutError:
+			await ctx.send("Timer expired! Please try again.")
+			idx_to_delete_strs = []
 
 		for idx_str in idx_to_delete_strs:
 
@@ -228,7 +245,7 @@ class Investigation:
 					success = True
 
 					# If user was first to find it, note it
-					if obj_str[2] == 0: # First
+					if (obj_str[2] == 0): # First
 						cs.execute(f"UPDATE Investigations SET Found = 1, FirstFinderID = {player_id} WHERE ItemNames == ? AND ItemInfo == ? AND ChannelID == {channel_id}", (f"{obj_str[0]}", f"{obj_str[1]}"))
 						conn.commit()
 
