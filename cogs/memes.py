@@ -277,8 +277,8 @@ class Memes:
 		cs.execute(f"SELECT CharName from Characters WHERE GuildID == {ctx.guild.id}")
 		characters = [x[0] for x in cs.fetchall()]
 
-		# await ctx.send("Command not written yet!")
-		# cont_outer = False
+		await ctx.send("Command not written yet!")
+		cont_outer = False
 
 		n_chars = len(characters)
 		# print(f"\n{characters}")
