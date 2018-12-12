@@ -3,6 +3,7 @@ from discord.ext import commands
 from .config import *
 import asyncio
 import datetime
+import json
 
 class Events:
 
@@ -10,9 +11,7 @@ class Events:
 		self.bot = bot
 
 	async def on_ready(self):
-		print(f"\nLogged in as {self.bot.user.name} - {self.bot.user.id}\nVersion: {discord.__version__}\n")
-		await self.bot.change_presence(activity=discord.Game(name='!help'))
-
+		
 		# Correct announcements that have passed without posting (post times during bot downtime)
 		time_now = datetime.datetime.utcnow()
 		int_timestamp_now = int(time_now.strftime("%Y%m%d%H%M"))
@@ -32,6 +31,62 @@ class Events:
 
 			cs.execute(f"UPDATE Announcements SET NextPosting = {passed_time_int} WHERE GuildID == {announcement[2]} AND ChannelID == {announcement[3]} AND NextPosting == {announcement[1]} AND Frequency == {frequency} LIMIT 1")
 			conn.commit()
+
+		# Check Investigations and Maps for deleted Channels, Roles etc.
+		# Investigations
+		cs.execute(f"SELECT DISTINCT ChannelID FROM Investigations")
+
+		for channel_id_entry in cs.fetchall():
+			channel_id = channel_id_entry[0]
+			channel_obj = self.bot.get_channel(channel_id)
+
+			if (channel_obj == None):
+				# Remove the entries
+				cs.execute(f"DELETE FROM Investigations WHERE ChannelID == {channel_id}")
+
+		conn.commit()
+
+		# Maps. Check for deleted channel or role
+		cs.execute(f"SELECT ChannelID, RoleID FROM Maps")
+		conns_to_remove = []
+		for channel_entry in cs.fetchall():
+			channel_id = channel_entry[0]
+			role_id = channel_entry[1]
+
+			channel_obj = self.bot.get_channel(channel_id)
+
+			try:
+				role_obj = channel_obj.guild.get_role(role_id)
+			except:
+				role_obj = None
+
+			if (channel_obj == None or role_obj == None):
+				cs.execute(f"DELETE FROM Maps WHERE ChannelID == {channel_id} LIMIT 1")
+				conns_to_remove.append(channel_id)
+
+		conn.commit()
+
+		# Remove connections. Inefficient as hell but it only happens once per bot login. 
+		cs.execute(f"SELECT ChannelID, OutgoingConnections FROM Maps")
+		all_channels_entry = cs.fetchall()
+
+		for channel_entry in all_channels_entry:
+			outgoing_conns_str = channel_entry[1]
+			channel_id = channel_entry[0]
+
+			conns = json.loads(outgoing_conns_str)
+
+			# Remove the intersection of conns_to_remove and conns from conns
+			conns = [x for x in conns if x not in conns_to_remove]
+
+			new_conns_str = str(json.dumps(conns))
+
+			cs.execute(f"UPDATE Maps SET OutgoingConnections = ? WHERE ChannelID == {channel_id} LIMIT 1", (f"{new_conns_str}",))
+
+		conn.commit()
+
+		print(f"\nLogged in as {self.bot.user.name} - {self.bot.user.id}\nVersion: {discord.__version__}\n")
+		await self.bot.change_presence(activity=discord.Game(name='!help'))
 
 		self.bot.loop.create_task(self.announcement_task())
 
@@ -81,6 +136,70 @@ class Events:
 
 		conn.commit()
 
+	async def on_guild_role_delete(self, ctx): # ctx is Role
+		
+		# Check if role was a channel role
+		cs.execute(f"SELECT ChannelID FROM Maps WHERE RoleID == {ctx.id} LIMIT 1")
+		channel_id_entry = cs.fetchone()
+		if channel_id_entry is not None: # in db, delete entry and remove connections
+			channel_id = channel_id_entry[0]
+
+			# Delete Entry
+			cs.execute(f"DELETE FROM Maps WHERE ChannelID == {channel_id} LIMIT 1")
+			conn.commit()
+
+			# Delete connections to channel_id
+			cs.execute(f"SELECT OutgoingConnections, ChannelID FROM Maps WHERE GuildID == {ctx.guild.id}")
+
+			all_connections_str = cs.fetchall()
+
+			for conn_str in all_connections_str:
+				conns = json.loads(conn_str[0])
+				conn_channel_id = conn_str[1]
+
+				if (channel_id in conns):
+					conns = [x for x in conns if x != channel_id]
+
+					new_conns_str = str(json.dumps(conns))
+
+					# Commit
+					cs.execute(f"UPDATE Maps SET OutgoingConnections = ? WHERE ChannelID == {conn_channel_id} LIMIT 1", (f"{new_conns_str}",))
+
+			conn.commit()
+
+	async def on_guild_channel_delete(self, ctx): #ctx is Channel
+
+		# Check if channel was in Maps
+		cs.execute(f"SELECT 1 FROM Maps WHERE ChannelID == {ctx.id} LIMIT 1")
+
+		channel_in_maps = cs.fetchone() is not None
+
+		if (channel_in_maps):
+			channel_id = ctx.id
+			# Remove the entry
+			cs.execute(f"DELETE FROM Maps WHERE ChannelID == {channel_id} LIMIT 1")
+
+			# Remove connections
+			cs.execute(f"SELECT OutgoingConnections, ChannelID FROM Maps WHERE GuildID == {ctx.guild.id}")
+
+			all_connections_str = cs.fetchall()
+
+			for conn_str in all_connections_str:
+				conns = json.loads(conn_str[0])
+				conn_channel_id = conn_str[1]
+
+				if (channel_id in conns):
+					conns = [x for x in conns if x != channel_id]
+
+					new_conns_str = str(json.dumps(conns))
+
+					# Commit
+					cs.execute(f"UPDATE Maps SET OutgoingConnections = ? WHERE ChannelID == {conn_channel_id} LIMIT 1", (f"{new_conns_str}",))
+
+			conn.commit()
+
+		# TODO Check if channel was in investigations or announcements
+
 	# Announcement background task
 	# TODO Allow for time pauses
 	async def announcement_task(self):
@@ -113,7 +232,7 @@ class Events:
 					try:
 						channel = self.bot.get_channel(channel_id)
 						await channel.send(message)
-					except: 
+					except: # Channel nonexistent or lacked permissions. TODO Better handling
 						pass
 
 					# Update next posting

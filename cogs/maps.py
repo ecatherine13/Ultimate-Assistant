@@ -44,7 +44,7 @@ class Maps:
 			ch_in_db = cs.fetchone() is not None
 
 			if(ch_in_db):
-				await ctx.send(f"{channel} is already set up! To modify connections, use `!ac #{channel_obj.name}`.")
+				await ctx.send(f"{channel} is already set up! To modify connections, use `!sc #{channel_obj.name}`.")
 				cont = False
 			else: # add the entry and role
 				channel_name = channel_obj.name
@@ -57,7 +57,7 @@ class Maps:
 				cs.execute(f"INSERT INTO Maps (GuildID, ChannelID, RoleID) VALUES ({ctx.guild.id}, {channel_id}, {new_role.id})")
 				conn.commit()
 
-				await ctx.send(f"Set up role for {channel}, use `!ac #{channel_obj.name}` to add connections.")
+				await ctx.send(f"Set up role for {channel}, use `!sc #{channel_obj.name}` to add connections.")
 
 	# Edit connections
 	@commands.command(name="set_connections", aliases=["map_connections", "mapconnections", "sc"], help="Set channel connections for a channel-specific role. CThere's currently no way to edit an existing list of connections, but it can be overwritten at any time.")
@@ -303,7 +303,7 @@ class Maps:
 				cs.execute(f"INSERT INTO Maps (GuildID, ChannelID, RoleID) VALUES ({ctx.guild.id}, {channel_id}, {new_role.id})")
 				conn.commit()
 
-				await ctx.send(f"Set up role for {channel}, use `!ac #{channel_obj.name}` to add connections.")
+				await ctx.send(f"Set up role for {channel}, use `!sc #{channel_obj.name}` to add connections.")
 
 		else:
 			await ctx("That is not a valid channel!")

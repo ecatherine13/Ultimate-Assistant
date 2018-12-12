@@ -13,8 +13,8 @@ class Investigation:
 		self.bot = bot
 
 	# Embed intestigatable items. One embed per channel
-	def embed_investigation(self, guild_id):
-		cs.execute(f"SELECT ChannelID, ItemNames, ItemInfo FROM Investigations WHERE GuildID == {guild_id}")
+	def embed_investigation(self, ctx, guild_id):
+		cs.execute(f"SELECT ChannelID, ItemNames, ItemInfo, FirstFinderID FROM Investigations WHERE GuildID == {guild_id}")
 
 		all_objects = cs.fetchall()
 
@@ -37,8 +37,16 @@ class Investigation:
 			for obj in channel_objects:
 				item_names = obj[1]
 				item_description = obj[2]
+				first_finder_id = obj[3]
 
-				embed.add_field(name=f"[{idx}] {item_names}", value=item_description, inline=False)
+				if (first_finder_id != None):
+					finder_member = ctx.guild.get_member(first_finder_id)
+					finder_name = finder_member.display_name
+
+					embed.add_field(name=f"[{idx}] {item_names}", value=f"*First found by **{finder_name}***\n{item_description}", inline=False)
+
+				else:
+					embed.add_field(name=f"[{idx}] {item_names}", value=item_description, inline=False)
 				idx += 1
 
 			embeds.append(embed)
@@ -133,7 +141,7 @@ class Investigation:
 			return msg.author == ctx.message.author and msg.channel == ctx.message.channel
 
 		# Display objects
-		embeds = self.embed_investigation(ctx.guild.id)
+		embeds = self.embed_investigation(ctx, ctx.guild.id)
 
 		if (len(embeds) == 0):
 			await ctx.send("No investigations set up!")
@@ -198,7 +206,7 @@ class Investigation:
 	@commands.has_permissions(administrator=True)
 	async def investigations(self, ctx):
 		# Display objects
-		embeds = self.embed_investigation(ctx.guild.id)
+		embeds = self.embed_investigation(ctx, ctx.guild.id)
 
 		if (len(embeds) == 0):
 			await ctx.send("No investigations set up!")
@@ -241,19 +249,27 @@ class Investigation:
 				if obj_name.lower() in obj_names:
 					
 					user = self.bot.get_user(player_id)
-					await user.send(f"**{obj_name.upper()}** \n{obj_str[1]}")
-					success = True
 
-					# If user was first to find it, note it
-					if (obj_str[2] == 0): # First
-						cs.execute(f"UPDATE Investigations SET Found = 1, FirstFinderID = {player_id} WHERE ItemNames == ? AND ItemInfo == ? AND ChannelID == {channel_id}", (f"{obj_str[0]}", f"{obj_str[1]}"))
-						conn.commit()
+					try:
+						await user.send(f"**{obj_name.upper()}** \n{obj_str[1]}")
+						success = True
 
-					break
+						# If user was first to find it, note it
+						if (obj_str[2] == 0): # First
+							cs.execute(f"UPDATE Investigations SET Found = 1, FirstFinderID = {player_id} WHERE ItemNames == ? AND ItemInfo == ? AND ChannelID == {channel_id}", (f"{obj_str[0]}", f"{obj_str[1]}"))
+							conn.commit()
+
+						break
+
+					except:
+						await ctx.send("I am unable to DM you! Check your DM settings?")
 
 			if (not success):
-				user = self.bot.get_user(player_id)
-				await user.send(f"You do not find anything of note!")
+				try:
+					user = self.bot.get_user(player_id)
+					await user.send(f"You do not find anything of note!")
+				except:
+					await ctx.send("I am unable to DM you! Check your DM settings?")
 
 	# Command to investigate. DMs the description. The command can be done outside of a channel to keep it secret. This command could go in with the regular investigation, but the argument order made it annoying.
 	@commands.command(name="rinvestigate", aliases=["rcheck", "remote_investigate", "remoteinvestigate"], help="Investigate in a channel remotely.")
@@ -284,7 +300,7 @@ class Investigation:
 				cont = False
 		
 		if (cont):
-			cs.execute(f"SELECT ItemNames, ItemInfo FROM Investigations WHERE ChannelID == {channel_id}")
+			cs.execute(f"SELECT ItemNames, ItemInfo, Found FROM Investigations WHERE ChannelID == {channel_id}")
 
 			channel_objects_strs = cs.fetchall()
 
@@ -295,13 +311,28 @@ class Investigation:
 				if obj_name.lower() in obj_names:
 					# TODO DM
 					user = self.bot.get_user(player_id)
-					await user.send(f"**{obj_name.upper()}** \n{obj_str[1]}")
-					success = True
+
+					try:
+						await user.send(f"**{obj_name.upper()}** \n{obj_str[1]}")
+						success = True
+
+						# If user was first to find it, note it
+						if (obj_str[2] == 0): # First
+							cs.execute(f"UPDATE Investigations SET Found = 1, FirstFinderID = {player_id} WHERE ItemNames == ? AND ItemInfo == ? AND ChannelID == {channel_id}", (f"{obj_str[0]}", f"{obj_str[1]}"))
+							conn.commit()
+						
+					except:
+						await ctx.send("I am unable to DM you! Check your DM settings?")
+						success = True
+
 					break
 
 			if (not success):
-				user = self.bot.get_user(player_id)
-				await user.send(f"You do not find anything of note!")
+				try:
+					user = self.bot.get_user(player_id)
+					await user.send(f"You do not find anything of note!")
+				except:
+					await ctx.send("I am unable to DM you! Check your DM settings?")
 
 	# TODO Remote investigation, for secret investigations. Requires the channel tag as an argument. This could easily go in the previous command but the argument order would be kinda annoying.
 
