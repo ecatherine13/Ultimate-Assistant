@@ -12,6 +12,10 @@ To view this README, use:
 
 `!docs | !src | !source | !readme`
 
+To invite the bot to your server:
+
+https://discordapp.com/oauth2/authorize?client_id=517165856933937153&scope=bot
+
 ## Important
 
 This bot functions on the premise that admin will set up each player with a character. Multiple characters can be assigned to one user, with the most recently made one automatically being assigned. Upon initiation, the character is assigned a unique nickname for look-up purposes. This is to accomodate repeated names, and so that long names do not need to be fully typed. In most cases, the nickname will just be the character's first name.

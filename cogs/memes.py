@@ -6,6 +6,7 @@ import random
 import os
 import asyncio
 import json
+import math
 
 class Memes:
 	def __init__(self, bot):
@@ -238,7 +239,17 @@ class Memes:
 			
 			reg_chars = all_chars_list
 
-			return reg_chars, mm_chars, t_chars
+			# Finally, choose number of survivors. Cannot exceed leng(reg_chars)
+			n_svr = random.gauss(4, 3)
+
+			if (n_svr <=0):
+				n_svr = 0
+			elif (n_svr >= len(reg_chars)):
+				n_svr = round(len(reg_chars) / 3)
+			else:
+				n_svr = round(n_svr)
+
+			return reg_chars, mm_chars, t_chars, n_svr
 
 		def headcount_str(reg_chars, mm_chars, t_chars, reg_alive, mm_alive, t_alive):
 			alive_chars = reg_alive + mm_alive + t_alive
@@ -266,13 +277,13 @@ class Memes:
 		cs.execute(f"SELECT CharName from Characters WHERE GuildID == {ctx.guild.id}")
 		characters = [x[0] for x in cs.fetchall()]
 
-		await ctx.send("Command not written yet!")
-		cont_outer = False
+		# await ctx.send("Command not written yet!")
+		# cont_outer = False
 
 		n_chars = len(characters)
 		# print(f"\n{characters}")
-		if(n_chars < 2):
-			await ctx.send(f"You need at least 2 characters to play a game!")
+		if(n_chars < 5):
+			await ctx.send(f"You need at least 5 characters to play a game!")
 			cont_outer = False
 		
 		# Choose setting
@@ -282,10 +293,12 @@ class Memes:
 			await ctx.send(raw_setting.replace("{n_chars}", str(n_chars)))
 
 			# Choose mms and traitors
-			reg_chars, mm_chars, t_chars = choose_chars(characters)
-			reg_alive = [x for x in reg_chars]
-			mm_alive = [x for x in mm_chars]
-			t_alive = [x for x in t_chars]
+			reg_chars, mm_chars, t_chars, n_svr = choose_chars(characters)
+			reg_dead = []
+			mm_dead = []
+			t_dead = []
+
+			print(f"Regular: {reg_chars}\nMM: {mm_chars}\nTraitor: {t_chars}\nNo. Survivors: {n_svr}")
 
 		# Prologue
 		if (cont_outer):	
@@ -296,30 +309,30 @@ class Memes:
 			p_td = 0
 			p_rd = 0.02
 
-			alive_chars, dead_chars = get_headcount(reg_chars, mm_chars, t_chars, reg_alive, mm_alive, t_alive)
+		# 	alive_chars, dead_chars = get_headcount(reg_chars, mm_chars, t_chars, reg_alive, mm_alive, t_alive)
 
-			unmentioned_chars = random.shuffle([x for x in alive_chars])
+		# 	unmentioned_chars = random.shuffle([x for x in alive_chars])
 
-			while (len(unmentioned_chars) > 0):
-				# Choose an event.
-				if (random.uniform(0, 1) > p_rd): #Normal event
-					event_str = random.choice(self.prologue_events)
-					event_str_parsed, mentioned_chars = parse_event(event_str, unmentioned_chars)
+		# 	while (len(unmentioned_chars) > 0):
+		# 		# Choose an event.
+		# 		if (random.uniform(0, 1) > p_rd): #Normal event
+		# 			event_str = random.choice(self.prologue_events)
+		# 			event_str_parsed, mentioned_chars = parse_event(event_str, unmentioned_chars)
 
-					unmentioned_chars = [x for x in unmentioned_chars if x not in mentioned_chars]
+		# 			unmentioned_chars = [x for x in unmentioned_chars if x not in mentioned_chars]
 
-					await ctx.send(embed=discord.Embed(title=event_str_parsed, color=int("%06x" % random.randint(0, 0xFFFFFF), 16)))
+		# 			await ctx.send(embed=discord.Embed(title=event_str_parsed, color=int("%06x" % random.randint(0, 0xFFFFFF), 16)))
 
-				else: #Death event 
-					event_str = random.choice(self.prologue_deaths)
-					possible_deaths = [x for x in unmentioned_chars if x not in mm_chars]
-					possible_deaths = [x for x in possible_deaths if x not in t_chars]
+		# 		else: #Death event 
+		# 			event_str = random.choice(self.prologue_deaths)
+		# 			possible_deaths = [x for x in unmentioned_chars if x not in mm_chars]
+		# 			possible_deaths = [x for x in possible_deaths if x not in t_chars]
 
-					event_str_parsed, mentioned_chars = parse_event(event_str, possible_deaths)
+		# 			event_str_parsed, mentioned_chars = parse_event(event_str, possible_deaths)
 
-					unmentioned_chars = [x for x in unmentioned_chars if x not in mentioned_chars]
+		# 			unmentioned_chars = [x for x in unmentioned_chars if x not in mentioned_chars]
 					
-					await ctx.send
+		# 			await ctx.send
 
 
 def setup(bot):

@@ -149,7 +149,5 @@ class Admin:
 		cs.execute(f"UPDATE GuildData SET AnonDMs = {adms_on} WHERE GuildID == {ctx.guild.id} LIMIT 1")
 		conn.commit()
 
-
-
 def setup(bot):
 	bot.add_cog(Admin(bot))
