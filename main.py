@@ -11,7 +11,7 @@ from cogs import config
 
 def main():
 	
-	bot = commands.Bot(command_prefix="!", description="A bot I threw together")
+	bot = commands.Bot(command_prefix="!", description="A bot for Danganronpa RP! Use `!src` to see full documentation~")
 
 ###################################################################################	
 # Load cogs
@@ -26,7 +26,8 @@ def main():
 							"cogs.announcements", 
 							"cogs.gacha", 
 							"cogs.investigation", 
-							"cogs.maps"
+							"cogs.maps", 
+							"cogs.dev"
 						  	]
 
 	if __name__ == "__main__":
