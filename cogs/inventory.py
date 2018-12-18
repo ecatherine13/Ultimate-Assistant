@@ -132,7 +132,7 @@ class Inventory:
 
 		for item, description in inventory.items():
 			try:
-				if (len(description) <= 200)
+				if (len(description) <= 200):
 					embeds[i].add_field(name=item, value=description, inline=False)
 				else:
 					embeds[i].add_field(name=item, value=f"{description[0:200]}...", inline=False)
