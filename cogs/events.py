@@ -122,6 +122,9 @@ class Events:
 
 	async def on_guild_remove(self, ctx):
 		# Remove guild specific things from announcements, investigations, gacha, and user data but leave characters for now.
+
+		# GuildData TODO
+
 		# Remove announcements
 		cs.execute(f"DELETE FROM Announcements WHERE GuildID == {ctx.id}")
 
