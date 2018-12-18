@@ -135,7 +135,7 @@ class Inventory:
 				if (len(description) <= 200)
 					embeds[i].add_field(name=item, value=description, inline=False)
 				else:
-					embeds[i].add_field(name=item, value=f"{description,[0:200]}...", inline=False)
+					embeds[i].add_field(name=item, value=f"{description[0:200]}...", inline=False)
 			except:
 				embeds[i].add_field(name=item, value="No description", inline=False)
 			n += 1
