@@ -197,8 +197,11 @@ class Utilities:
 
 			for member in guild_members:
 				if (member.guild_permissions.administrator):
-					await member.send(embed=admin_embed)
 
+					try:
+						await member.send(embed=admin_embed)
+					except:
+						await ctx.send(f"Unable to DM admin member {member.display_name}!")
 
 	# Sends me feedback.
 	@commands.command(name="feedback", help="This bot is still a WIP, and your feedback/suggestions are welcomed. Use this to send the developer a DM. The DM is completely anonymous save for user ID in order to screen for abuse/harassment.")

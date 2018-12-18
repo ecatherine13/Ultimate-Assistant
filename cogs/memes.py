@@ -282,7 +282,7 @@ class Memes:
 
 		n_chars = len(characters)
 		# print(f"\n{characters}")
-		if(n_chars < 5):
+		if(cont_outer and n_chars < 5):
 			await ctx.send(f"You need at least 5 characters to play a game!")
 			cont_outer = False
 		

@@ -58,6 +58,11 @@ Attach Files
 
 ## Version Updates <a name="updates"></a>
 
+__2018-12-18__
+* Maps now handle deleted roles and channels
+* Enforced some embed limits for gacha
+* Investigation list now displays the first player to successfully find an object
+
 __2018-12-06__
 * Should the bot go offline, it will check for scheduled announcements that were missed and adjust the next posting time.
 * Command to switch characters implemented
@@ -152,7 +157,7 @@ Command | Aliases | Example | Description
 !confiscate \<nickname\> | take_from, takefrom | !takefrom naomi | Displays inventory and prompts for an item name.
 !set_currency \<name\> | - | !set_currency Yen | Allows renaming the server's currency. Defaults to 'Coins' if not set.
 !amoney \<nickname\> | awallet | !amoney anne | View how much currency a player has.
-!give_money \<amount\>| pay, givemoney, givecoins, give_coins | !pay anne | Grants the player currency. Enter a negative number to take currency.
+!give_money \<nickname\> \<amount\>| pay, givemoney, givecoins, give_coins | !pay anne 5| Grants the player currency. Enter a negative number to take currency.
 !gacha_list | gachalist, gatcha_list, gatchalist | - | Lists gacha items for server with descriptions.
 !new_item \<item name\> | ni, newitem | !ni Another Battle | Adds an item to the server gacha. Prompts for a description and an optional image.
 !rem_items | ri, remitem | - | Displays a menu to remove one or more items from the gacha.
@@ -163,6 +168,8 @@ Command | Aliases | Example | Description
 These commands can be used in situtions where you would like to assign roles to certain channels or areas that should only be seen by those playing in them. A map is formed when one or more connections are defined between two channels. It is also recommended to make a 'starting channel' as an entry point for the map, as the `!go` command checks existing roles. 
 
 To set up a map, first use `!new_area_role #channel-name` to add a channel to the map. Define outgoing connections from it using `!set_connections #channel-name`. The entry point can be specified with `!set_start_point #channel-name`, and `!start` grants that role to all users with a character set up.
+
+To remove a channel from the map, delete the associated role (and/or channel). (TODO: Command for this)
 
 ex. `#elevator-f1` connects to `#elevator-f2`. To hide floor 1 from those in floor 2 and vice versa:
 

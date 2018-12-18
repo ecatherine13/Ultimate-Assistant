@@ -60,7 +60,11 @@ class Gacha:
 			name = item[1]
 			description = item[2]
 			
-			embeds[i].add_field(name=f"[{idx}] {name}", value=description, inline=False)
+			if (len(description) > 200):
+				embeds[i].add_field(name=f"[{idx}] {name}", value=f"{description[0:200]}...", inline=False)
+			else:
+				embeds[i].add_field(name=f"[{idx}] {name}", value=description, inline=False)
+
 			idx += 1
 			
 			n += 1
@@ -336,8 +340,7 @@ class Gacha:
 
 			# Display item (part 1)
 			color = int("%06x" % random.randint(0, 0xFFFFFF), 16)
-			embed = discord.Embed(title=f"{char_name} obtains an item!", color=color)
-			embed.add_field(name=item_name_base, value=item_description)
+			embed = discord.Embed(title=f"{char_name} obtains {item_name_base}!", color=color, description=item_description)
 
 			# Add item to the player's inventory. If they already have it, make a note of it.
 			# TODO - account for multiple of same gacha item.
