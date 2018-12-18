@@ -169,7 +169,7 @@ These commands can be used in situtions where you would like to assign roles to 
 
 To set up a map, first use `!new_area_role #channel-name` to add a channel to the map. Define outgoing connections from it using `!set_connections #channel-name`. The entry point can be specified with `!set_start_point #channel-name`, and `!start` grants that role to all users with a character set up.
 
-To remove a channel from the map, you must delete the associated role (and/or channel). (TODO: Command for this)
+To remove a channel from the map, delete the associated role (and/or channel). (TODO: Command for this)
 
 ex. `#elevator-f1` connects to `#elevator-f2`. To hide floor 1 from those in floor 2 and vice versa:
 
@@ -180,8 +180,6 @@ The `elevator` channels will automatically have the roles added to them with rea
 
 3. `!setsp #elevator-f1` (bot assigns all players the `elevator-f1` role)
 4. `!start`
-
-To remove a channel from the map, delete the channel or role. (TODO: Command for this)
 
 Command | Aliases | Example | Description
 --- | --- | --- | ---
