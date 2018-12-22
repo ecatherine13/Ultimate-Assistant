@@ -118,12 +118,17 @@ class Character_Management:
 		# Add to db
 		if (cont):
 			try:
-				regex = "<@!?([0-9]{18})>" # user id capture
+
+				regex = "<@!?([0-9]*)>" # user id capture. ! just means they have a nickname
 
 				player_id_str = re.findall(regex, player)
 				player_id = int(player_id_str[0])
-			except:
+				
+				self.bot.get_user(player_id)
+			except Exception as e:
 				await ctx.send("Something went wrong! Did you ping the player? `!nc @Player Character Name`")
+				print(e)
+				print(player)
 				cont = False
 		
 		if (cont):
