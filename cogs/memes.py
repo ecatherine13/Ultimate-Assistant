@@ -190,6 +190,7 @@ class Memes:
 
 			return alive_chars
 		
+		# Returns arrays reg_chars, mm_chars, t_chars, and the integer n_svr. mm and t can be empty
 		def choose_chars(all_chars_list):
 			# shuffle characters so they can just be popped
 			random.shuffle(all_chars_list)
@@ -286,7 +287,7 @@ class Memes:
 			await ctx.send(f"You need at least 5 characters to play a game!")
 			cont_outer = False
 		
-		# Choose setting
+		# Choose setting and shuffle characters into reg_chars, mm_chars, t_chars,  - Done
 		if (cont_outer):
 			setting_num = random.randint(0, len(self.setting_choices)-1)
 			raw_setting = self.setting_choices[setting_num]
@@ -307,7 +308,11 @@ class Memes:
 			# Probability of mm, traitor, and regular deaths
 			p_mmd = 0
 			p_td = 0
-			p_rd = 0.02
+			p_rd = 0.015
+
+			unmentioned_chars = random.shuffle(reg_chars + mm_chars + t_chars)
+
+			# while (len(unmentioned_chars) > 0):
 
 		# 	alive_chars, dead_chars = get_headcount(reg_chars, mm_chars, t_chars, reg_alive, mm_alive, t_alive)
 

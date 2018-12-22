@@ -30,7 +30,7 @@ class Announcements:
 		# Make sure it's a proper channel
 		# obtains int channel_id
 		if(cont):
-			# Capture channel id
+			# Capture channel id. TODO - account for old/new channels with <> 18 digits
 			regex = "<#([0-9]{18})>"
 			channel_id_str = re.findall(regex, channel)
 

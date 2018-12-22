@@ -118,8 +118,12 @@ class Utilities:
 			embed.add_field(name=f"{msg2} =", value="**" + str(total) + "**", inline=True)
 
 		await ctx.send(embed=embed)
-		await ctx.message.delete()
 
+		try:
+			await ctx.message.delete()
+		except:
+			pass
+		
 	@roll.error
 	async def roll_error(self, ctx, error):
 		if isinstance(error, commands.CommandInvokeError):
