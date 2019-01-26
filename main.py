@@ -22,7 +22,7 @@ def main():
 							"cogs.admin", 
 							"cogs.management", 
 							"cogs.inventory", 
-							"cogs.memes", 
+							# "cogs.memes", 
 							"cogs.announcements", 
 							"cogs.gacha", 
 							"cogs.investigation", 
@@ -56,6 +56,9 @@ def main():
 		elif isinstance(error, commands.BotMissingPermissions):
 			await ctx.send("My highest role does not have permissions to use this command!")
 
+		elif isinstance(error, commands.CommandOnCooldown):
+			await ctx.send(error)
+
 		else:
 			guild_id = ctx.guild.id
 			channel_id = ctx.message.channel.id
@@ -69,7 +72,7 @@ def main():
 			await user.send(error_message)
 
 			# Notify user
-			await ctx.send("Whoops! Have you set up your characters with `!nc @Player Character Name`? An error report has been sent to the developer.")
+			await ctx.send("Whoops, something went wrong! An error report has been sent to the developer. Read the documentation with `!src`, or bring your question to the development server: <https://discord.gg/X2mA9bF>")
 
 ###################################################################################	
 # Run bot	
