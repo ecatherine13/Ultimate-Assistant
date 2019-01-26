@@ -32,6 +32,18 @@ class Events:
 			cs.execute(f"UPDATE Announcements SET NextPosting = {passed_time_int} WHERE GuildID == {announcement[2]} AND ChannelID == {announcement[3]} AND NextPosting == {announcement[1]} AND Frequency == {frequency} LIMIT 1")
 			conn.commit()
 
+		# Add guild entries to GuildData if bot was added while offline, also weed out guilds it's been kicked out of (TODO)
+		bot_guild_ids = [x.id for x in self.bot.guilds]
+
+		# If guild not in DB, add to it
+		for guild_id in bot_guild_ids:
+			cs.execute(f"SELECT 1 FROM GuildData WHERE GuildID == {guild_id} LIMIT 1")
+			guild_in_db = cs.fetchone() is not None
+			
+			if(guild_in_db == False):
+				cs.execute(f"INSERT INTO GuildData (GuildID) VALUES ({guild_id})")
+				conn.commit()
+
 		# Check Investigations and Maps for deleted Channels, Roles etc.
 		# Investigations
 		cs.execute(f"SELECT DISTINCT ChannelID FROM Investigations")
