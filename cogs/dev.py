@@ -31,6 +31,7 @@ class Dev:
 		embed = discord.Embed(title="List of Servers I am in:", description=guild_str[0:1999])
 
 		await ctx.send(embed=embed)
+		
 
 def setup(bot):
 	bot.add_cog(Dev(bot))
