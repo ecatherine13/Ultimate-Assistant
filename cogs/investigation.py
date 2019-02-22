@@ -40,10 +40,14 @@ class Investigation:
 				first_finder_id = obj[3]
 
 				if (first_finder_id != None):
-					finder_member = ctx.guild.get_member(first_finder_id)
-					finder_name = finder_member.display_name
 
-					embed.add_field(name=f"[{idx}] {item_names}", value=f"*First found by **{finder_name}***\n{item_description}", inline=False)
+					try:
+						finder_member = ctx.guild.get_member(first_finder_id)
+						finder_name = finder_member.display_name
+
+						embed.add_field(name=f"[{idx}] {item_names}", value=f"*First found by **{finder_name}***\n{item_description}", inline=False)
+					except:
+						embed.add_field(name=f"[{idx}] {item_names}", value=f"*First found by **UnknownMember***\n{item_description}", inline=False)
 
 				else:
 					embed.add_field(name=f"[{idx}] {item_names}", value=item_description, inline=False)
