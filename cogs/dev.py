@@ -31,7 +31,12 @@ class Dev:
 		embed = discord.Embed(title="List of Servers I am in:", description=guild_str[0:1999])
 
 		await ctx.send(embed=embed)
-		
+
+	# Dev command to do whatever
+	@commands.command(name="dev")
+	@commands.check(is_dev)
+	async def dev(self, ctx):
+		await ctx.send("dev command works")
 
 def setup(bot):
 	bot.add_cog(Dev(bot))
