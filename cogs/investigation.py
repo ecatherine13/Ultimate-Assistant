@@ -45,12 +45,12 @@ class Investigation:
 						finder_member = ctx.guild.get_member(first_finder_id)
 						finder_name = finder_member.display_name
 
-						embed.add_field(name=f"[{idx}] {item_names}", value=f"*First found by **{finder_name}***\n{item_description[0:250]}", inline=False)
+						embed.add_field(name=f"[{idx}] {item_names[0:250]}", value=f"*First found by **{finder_name}***\n{item_description[0:250]}", inline=False)
 					except:
-						embed.add_field(name=f"[{idx}] {item_names}", value=f"*First found by **UnknownMember***\n{item_description[0:250]}", inline=False)
+						embed.add_field(name=f"[{idx}] {item_names[0:250]}", value=f"*First found by **UnknownMember***\n{item_description[0:250]}", inline=False)
 
 				else:
-					embed.add_field(name=f"[{idx}] {item_names}", value=item_description[0:250], inline=False)
+					embed.add_field(name=f"[{idx}] {item_names[0:250]}", value=item_description[0:250], inline=False)
 				idx += 1
 
 			embeds.append(embed)
