@@ -32,6 +32,8 @@ class Events:
 			cs.execute(f"UPDATE Announcements SET NextPosting = {passed_time_int} WHERE GuildID == {announcement[2]} AND ChannelID == {announcement[3]} AND NextPosting == {announcement[1]} AND Frequency == {frequency} LIMIT 1")
 			conn.commit()
 
+		print("Synced Announcements")
+
 		# Add guild entries to GuildData if bot was added while offline, also weed out guilds it's been kicked out of (TODO)
 		bot_guild_ids = [x.id for x in self.bot.guilds]
 
@@ -43,6 +45,8 @@ class Events:
 			if(guild_in_db == False):
 				cs.execute(f"INSERT INTO GuildData (GuildID) VALUES ({guild_id})")
 				conn.commit()
+
+		print("Synced Guilds")
 
 		# Check Investigations and Maps for deleted Channels, Roles etc.
 		# Investigations
@@ -57,6 +61,7 @@ class Events:
 				cs.execute(f"DELETE FROM Investigations WHERE ChannelID == {channel_id}")
 
 		conn.commit()
+		print("Synced Investigations")
 
 		# Maps. Check for deleted channel or role
 		cs.execute(f"SELECT ChannelID, RoleID FROM Maps")
@@ -96,7 +101,8 @@ class Events:
 			cs.execute(f"UPDATE Maps SET OutgoingConnections = ? WHERE ChannelID == {channel_id} LIMIT 1", (f"{new_conns_str}",))
 
 		conn.commit()
-
+		print("Synced Maps")
+		
 		print(f"\nLogged in as {self.bot.user.name} - {self.bot.user.id}\nVersion: {discord.__version__}\n")
 		await self.bot.change_presence(activity=discord.Game(name='!help'))
 
