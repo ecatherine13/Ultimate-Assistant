@@ -12,6 +12,7 @@ class Events:
 
 	async def on_ready(self):
 		
+		print("Here")
 		# Correct announcements that have passed without posting (post times during bot downtime)
 		time_now = datetime.datetime.utcnow()
 		int_timestamp_now = int(time_now.strftime("%Y%m%d%H%M"))
@@ -32,7 +33,7 @@ class Events:
 			cs.execute(f"UPDATE Announcements SET NextPosting = {passed_time_int} WHERE GuildID == {announcement[2]} AND ChannelID == {announcement[3]} AND NextPosting == {announcement[1]} AND Frequency == {frequency} LIMIT 1")
 			conn.commit()
 
-		print("Synced Announcements")
+		print("\nSynced Announcements")
 
 		# Add guild entries to GuildData if bot was added while offline, also weed out guilds it's been kicked out of (TODO)
 		bot_guild_ids = [x.id for x in self.bot.guilds]
@@ -50,59 +51,59 @@ class Events:
 
 		# Check Investigations and Maps for deleted Channels, Roles etc.
 		# Investigations
-		cs.execute(f"SELECT DISTINCT ChannelID FROM Investigations")
+		# cs.execute(f"SELECT DISTINCT ChannelID FROM Investigations")
 
-		for channel_id_entry in cs.fetchall():
-			channel_id = channel_id_entry[0]
-			channel_obj = self.bot.get_channel(channel_id)
+		# for channel_id_entry in cs.fetchall():
+		# 	channel_id = channel_id_entry[0]
+		# 	channel_obj = self.bot.get_channel(channel_id)
 
-			if (channel_obj == None):
-				# Remove the entries
-				cs.execute(f"DELETE FROM Investigations WHERE ChannelID == {channel_id}")
+		# 	if (channel_obj == None):
+		# 		# Remove the entries
+		# 		cs.execute(f"DELETE FROM Investigations WHERE ChannelID == {channel_id}")
 
-		conn.commit()
-		print("Synced Investigations")
+		# conn.commit()
+		# print("Synced Investigations")
 
 		# Maps. Check for deleted channel or role
-		cs.execute(f"SELECT ChannelID, RoleID FROM Maps")
-		conns_to_remove = []
-		for channel_entry in cs.fetchall():
-			channel_id = channel_entry[0]
-			role_id = channel_entry[1]
+		# cs.execute(f"SELECT ChannelID, RoleID FROM Maps")
+		# conns_to_remove = []
+		# for channel_entry in cs.fetchall():
+		# 	channel_id = channel_entry[0]
+		# 	role_id = channel_entry[1]
 
-			channel_obj = self.bot.get_channel(channel_id)
+		# 	channel_obj = self.bot.get_channel(channel_id)
 
-			try:
-				role_obj = channel_obj.guild.get_role(role_id)
-			except:
-				role_obj = None
+		# 	try:
+		# 		role_obj = channel_obj.guild.get_role(role_id)
+		# 	except:
+		# 		role_obj = None
 
-			if (channel_obj == None or role_obj == None):
-				cs.execute(f"DELETE FROM Maps WHERE ChannelID == {channel_id} LIMIT 1")
-				conns_to_remove.append(channel_id)
+		# 	if (channel_obj == None or role_obj == None):
+		# 		cs.execute(f"DELETE FROM Maps WHERE ChannelID == {channel_id} LIMIT 1")
+		# 		conns_to_remove.append(channel_id)
 
-		conn.commit()
+		# conn.commit()
 
 		# Remove connections. Inefficient as hell but it only happens once per bot login. 
-		cs.execute(f"SELECT ChannelID, OutgoingConnections FROM Maps")
-		all_channels_entry = cs.fetchall()
+		# cs.execute(f"SELECT ChannelID, OutgoingConnections FROM Maps")
+		# all_channels_entry = cs.fetchall()
 
-		for channel_entry in all_channels_entry:
-			outgoing_conns_str = channel_entry[1]
-			channel_id = channel_entry[0]
+		# for channel_entry in all_channels_entry:
+		# 	outgoing_conns_str = channel_entry[1]
+		# 	channel_id = channel_entry[0]
 
-			conns = json.loads(outgoing_conns_str)
+		# 	conns = json.loads(outgoing_conns_str)
 
-			# Remove the intersection of conns_to_remove and conns from conns
-			conns = [x for x in conns if x not in conns_to_remove]
+		# 	# Remove the intersection of conns_to_remove and conns from conns
+		# 	conns = [x for x in conns if x not in conns_to_remove]
 
-			new_conns_str = str(json.dumps(conns))
+		# 	new_conns_str = str(json.dumps(conns))
 
-			cs.execute(f"UPDATE Maps SET OutgoingConnections = ? WHERE ChannelID == {channel_id} LIMIT 1", (f"{new_conns_str}",))
+		# 	cs.execute(f"UPDATE Maps SET OutgoingConnections = ? WHERE ChannelID == {channel_id} LIMIT 1", (f"{new_conns_str}",))
 
-		conn.commit()
-		print("Synced Maps")
-		
+		# conn.commit()
+		# print("Synced Maps")
+
 		print(f"\nLogged in as {self.bot.user.name} - {self.bot.user.id}\nVersion: {discord.__version__}\n")
 		await self.bot.change_presence(activity=discord.Game(name='!help'))
 
