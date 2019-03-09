@@ -72,9 +72,10 @@ class Character_Management:
 		if (data[12] != None and len(data[12]) <= 1024):
 			embed.add_field(name="Public Bio", value=data[12], inline=False)
 
-		# Public Appearance. Separate field
+		# Public Appearance. Separate field. Quick fix for perople who have a blank field
 		if (data[16] != None):
-			embed.add_field(name="Public Appearance", value=data[16], inline=False)
+			try:
+				embed.add_field(name="Public Appearance", value=data[16], inline=False)
 
 		# Notes / Other. Separate field
 		if (data[14] != None):
