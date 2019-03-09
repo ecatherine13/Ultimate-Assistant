@@ -76,7 +76,9 @@ class Character_Management:
 		if (data[16] != None):
 			try:
 				embed.add_field(name="Public Appearance", value=data[16], inline=False)
-
+			except:
+				pass
+				
 		# Notes / Other. Separate field
 		if (data[14] != None):
 			embed.add_field(name="Other", value=data[14], inline=False)
