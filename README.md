@@ -58,6 +58,10 @@ Attach Files
 
 ## Version Updates <a name="updates"></a>
 
+__2019-03-09__
+* Added ability to customize prefix per server! The default is still "!"
+* Bug fixes, especially an embed display error with an empty field in Appearance section
+
 __2018-12-18__
 * Maps now handle deleted roles and channels
 * Enforced some embed limits for gacha
@@ -130,6 +134,7 @@ Command | Aliases | Example | Description
 
 Command | Aliases | Example | Description
 --- | --- | --- | ---
+!prefix \<prefix\> | newprefix, new_prefix | !prefix $ | Set a custom server prefix. Defaults to "!" if not set.
 !set_autorole \[role\] | sar, set_ar, setar, ar | !ar, !ar @Undecided | Leave blank to respond to a list. Otherwise, be sure to tag the role. New members who join the server will be given that role. Can only assign roles below the bot's highest role.
 !toggle_adm | - | - | Toggles Anonymous DMs. By default the feature is OFF.
 

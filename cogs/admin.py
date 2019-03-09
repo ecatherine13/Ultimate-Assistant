@@ -149,5 +149,12 @@ class Admin:
 		cs.execute(f"UPDATE GuildData SET AnonDMs = {adms_on} WHERE GuildID == {ctx.guild.id} LIMIT 1")
 		conn.commit()
 
+	# Set custom prefix
+	@commands.command(name="prefix", aliases=["set_prefix", "setprefix"], help="Set a custom prefix.")
+	@commands.has_permissions(administrator=True)
+	async def prefix(self, ctx, *, new_prefix):
+		cs.execute(f"UPDATE GuildData SET Prefix = ? WHERE GuildID == {ctx.guild.id} LIMIT 1", (f"{new_prefix}",))
+		conn.commit()
+
 def setup(bot):
 	bot.add_cog(Admin(bot))

@@ -8,10 +8,26 @@ import asyncio
 import time
 import sys, traceback
 from cogs import config
+import json
+from cogs.config import *
 
 def main():
-	
-	bot = commands.Bot(command_prefix="!", description="A bot for Danganronpa RP! Use `!src` to see full documentation~")
+
+	def prefix(bot, msg):
+		guild_id = msg.guild.id
+		print(guild_id)
+
+		cs.execute(f"SELECT Prefix FROM GuildData WHERE GuildID == {guild_id} LIMIT 1")
+
+		prefix = cs.fetchone()[0]
+
+		if (prefix == None):
+			prefix = "!"
+
+		print(prefix)
+		return prefix
+
+	bot = commands.Bot(command_prefix=prefix, description="A bot for Danganronpa RP! Use `!src` to see full documentation~")
 
 ###################################################################################	
 # Load cogs
