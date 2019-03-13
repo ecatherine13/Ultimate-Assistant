@@ -40,7 +40,8 @@ def main():
 							"cogs.gacha", 
 							"cogs.investigation", 
 							"cogs.maps", 
-							"cogs.dev"
+							"cogs.dev", 
+							"cogs.dice"
 						  	]
 
 	if __name__ == "__main__":
