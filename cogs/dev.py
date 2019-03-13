@@ -26,10 +26,19 @@ class Dev:
 
 		guild_str = ''
 
+		all_members = [];
+
 		for guild in guilds:
 			guild_str += f"{guild}\n"
-		embed = discord.Embed(title="List of Servers I am in:", description=guild_str[0:1999])
+			
+			guild_members = guild.members
+			member_ids = [member.id for member in guild_members]
+			all_members.extend(member_ids)
 
+		embed = discord.Embed(title="List of Servers I am in:", description=guild_str[0:1999])
+		embed.add_field(name="Unique users", value=f"{len(set(all_members))}")
+		
+		# Get number of unique users across guilds
 		await ctx.send(embed=embed)
 
 	# Dev command to do whatever

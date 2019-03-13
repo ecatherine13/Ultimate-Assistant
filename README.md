@@ -41,12 +41,14 @@ Attach Files
 
 [Player](#player)
 * [Utilities](#player_utilities)
+* [Dice and Stats](#player_dice)
 * [Inventory / Gacha](#player_inventory)
 * [Moving / Investigation](#player_moving)
 
 [Admin](#admin)
 * [Profile Setup](#admin_setup)
 * [Utilities](#admin_utilities)
+* [Dice and Stats](#admin_dice)
 * [Automated Announcements](#auto_announce)
 * [Inventory / Gacha](#admin_inventory)
 * [Maps](#admin_moving)
@@ -57,6 +59,10 @@ Attach Files
 [Future Updates](#future_updates)
 
 ## Version Updates <a name="updates"></a>
+
+__2019-03-12__
+* Reorganized dice rolls into their own category
+* Added custom die rolls and calculations with character stats
 
 __2019-03-09__
 * Added ability to customize prefix per server! The default is still "!"
@@ -77,7 +83,7 @@ __2018-12-06__
 
 Command | Aliases | Example | Description
 --- | --- | --- | ---
-!roll \<dice\>| r | !roll 2d12-d20+3 | Uses standard d20 notation
+!roll \<dice\>| r | !r 2d12-d20+3 | Uses standard d20 notation
 !lookup \<name\> | search, handbook, profile | !lookup jane | See public information on any character that has been set up
 !nicknames | lcn, names, list_char_nicknames, listnames, listnicknames | - | See a list of nicknames for server. 
 
@@ -90,6 +96,21 @@ Command | Aliases | Example | Description
 !playing_as | iam, my_char, mc | - | Displays the name of your in-game character as set up by an administrator. 
 !set_char | setchar | - | Allows player to switch their character. Useful in cases of multiple NPCs, otherwise situational.
 !anon_dm \<character\> \<message\>| anondm, anon_pm, anonpm, adm, apm | !adm Sonia A secret message for you | Send an anonymous DM to a player. This feature is *OFF* by default and must be enabled by an administrator with `!toggle_adm`. ***Disclaimer: The server admins are automatically DMed a record of the message. The developer is not responsible for abuse of this feature.***
+
+
+### Dice and Stats <a name="player_dice"></a>
+
+In addition to the regular rolling command, players may define custom rolls that they use often, and then calling them by name. Players may also set numerical values as 'stats' to a character and perform calculations with them. This is more geared toward mechanics heavy servers with combat or dungeoning systems.
+
+Command | Aliases | Example | Description
+--- | --- | --- | ---
+!rollc \<roll_name\>| rcs, rollcs | !rcs str | Rolls the dice notation set with `!new_croll`.
+!new_croll \<roll_name\> \<notation\>| ncr, ncrs | !ncr str 1d20+1 | Sets a custom roll for the character given by `!iam`.
+!crolls \<name\>| - | !crolls jane | See custom rolls for a specific character by nickname. 
+!calc \<equation\> | c, calculate | !c str*2 | Evaluates (simple) math expressions using stats defined with `!set_stat`. Uses Python 3.6 math notation!
+!set_stat \<stat_name\> \<value\> | ns, ss, newstat, us, updatestat, setstat | !ss str 10 |Add or update a state for the character given by `!iam`. Stat names are highly recommended to be single word and must be given a numerical value. Case insensitive.
+!stats \<name\> | - | !stats john | See stats for an individual.
+
 
 ### Inventory / Gacha <a name="player_inventory"></a>
 
@@ -137,6 +158,13 @@ Command | Aliases | Example | Description
 !prefix \<prefix\> | newprefix, new_prefix | !prefix $ | Set a custom server prefix. Defaults to "!" if not set.
 !set_autorole \[role\] | sar, set_ar, setar, ar | !ar, !ar @Undecided | Leave blank to respond to a list. Otherwise, be sure to tag the role. New members who join the server will be given that role. Can only assign roles below the bot's highest role.
 !toggle_adm | - | - | Toggles Anonymous DMs. By default the feature is OFF.
+
+
+### Dice and Stats <a name="admin_dice"></a>
+
+Command | Aliases | Example | Description
+--- | --- | --- | ---
+!aset_stat \<name\> \<stat_name\> \<stat_value\> | ans, anewstat, aus, aupdatestat | !ans jane str 10 | Same as the player stat setting command, but can be done for any character on the server.
 
 ### Automated Announcements <a name="auto_announce"></a>
 
