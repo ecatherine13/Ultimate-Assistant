@@ -229,14 +229,26 @@ class Events:
 		while (True):
 			time_now = datetime.datetime.utcnow()
 
+			# Syncing
 			if (not in_sync):
 				if(time_now.minute == 0 or time_now.minute == 30):
 					in_sync = True
 				else:
 					await asyncio.sleep(15) # Check every 15 seconds
 
+			# Synced
 			if (in_sync):
 				time_now_int = int(time_now.strftime("%Y%m%d%H%M"))
+
+				# Correct desynced time due to lag and set as not in sync
+				if (time_now.minute != 30 or time_now.minute != 0):
+					if (15 <= time_now.minute and time_now.minute <= 44): # 30
+						time_now_int = time_now_int - (time_now_int % 100) + 30
+					else:
+						time_now_int = time_now_int - (time_now_int % 100)
+
+					in_sync = False # resync
+
 				# Get announcements
 				cs.execute(f"SELECT * FROM Announcements WHERE NextPosting == {time_now_int}")
 				announcements = cs.fetchall()
@@ -266,7 +278,11 @@ class Events:
 					cs.execute(f"UPDATE Announcements SET NextPosting = {next_posting} WHERE GuildID == {guild_id} AND ChannelID == {channel_id} AND Message = ?", (message,))
 					conn.commit()
 
-				await asyncio.sleep(1800) # 30 minutes
+				# if still in sync
+				if (in_sync):
+					await asyncio.sleep(1800) # 30 minutes
+				else: # out of sync
+					await asyncio.sleep(15)
 
 def setup(bot):
 	bot.add_cog(Events(bot))
