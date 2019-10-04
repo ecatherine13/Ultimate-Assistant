@@ -86,8 +86,9 @@ def main():
 			await user.send(error_message)
 
 			# Notify user
-			await ctx.send("Whoops, something went wrong! An error report has been sent to the developer. Read the documentation with `!src`, or bring your question to the development server (invite in readme)")
-
+			msg = await ctx.send("Whoops, something went wrong! An error report has been sent to the developer. Read the documentation with `!src`, or bring your question to the development server (invite in readme)")
+			await asyncio.sleep(8)
+			await msg.delete()
 ###################################################################################	
 # Run bot	
 
