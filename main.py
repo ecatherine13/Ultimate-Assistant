@@ -58,10 +58,8 @@ def main():
 	
 	@bot.event
 	async def on_command_error(ctx, error):
-		if isinstance(error, commands.CommandNotFound):
-			await ctx.send(f"That is not a command! Use `!help` for a list.")
 		
-		elif isinstance(error, commands.MissingRequiredArgument):
+		if isinstance(error, commands.MissingRequiredArgument):
 			await ctx.send(f"Missing an argument! Use `!help <command name>`")
 		
 		elif isinstance(error, commands.MissingPermissions):
@@ -86,7 +84,7 @@ def main():
 			await user.send(error_message)
 
 			# Notify user
-			await ctx.send("Whoops, something went wrong! An error report has been sent to the developer. Read the documentation with `!src`, or bring your question to the development server: <https://discord.gg/X2mA9bF>")
+			await ctx.send("Whoops, something went wrong! An error report has been sent to the developer. Read the documentation with `!src`, or bring your question to the development server (invite in readme)")
 
 ###################################################################################	
 # Run bot	
