@@ -58,8 +58,10 @@ def main():
 	
 	@bot.event
 	async def on_command_error(ctx, error):
-		
-		if isinstance(error, commands.MissingRequiredArgument):
+		if isinstance(error, commands.CommandNotFound):
+			pass
+			
+		elif isinstance(error, commands.MissingRequiredArgument):
 			await ctx.send(f"Missing an argument! Use `!help <command name>`")
 		
 		elif isinstance(error, commands.MissingPermissions):
