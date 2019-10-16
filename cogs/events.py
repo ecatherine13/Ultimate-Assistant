@@ -17,7 +17,7 @@ class Events:
 		time_now = datetime.datetime.utcnow()
 		int_timestamp_now = int(time_now.strftime("%Y%m%d%H%M"))
 
-		cs.execute(f"SELECT Frequency, NextPosting, GuildID, ChannelID FROM Announcements WHERE NextPosting < {int_timestamp_now}")
+		cs.execute(f"SELECT Frequency, NextPosting, GuildID, ChannelID FROM Announcements WHERE Frequency > 0 AND Frequency < 100000 AND NextPosting < {int_timestamp_now}")
 		passed_announcements = cs.fetchall()
 
 		# There's probably a nicer and faster way to do this, but for now, just loop.
