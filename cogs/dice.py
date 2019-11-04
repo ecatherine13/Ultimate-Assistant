@@ -61,9 +61,13 @@ class Dice:
 	def single_roll(self, n, m):
 		results = []
 		result = 0
-		for i in range(0, int(n)):
-			result = random.randint(1, int(m))
-			results.append(result)
+		
+		if (int(n) <= 1000): # avoid memory errors
+			for i in range(0, int(n)):
+				result = random.randint(1, int(m))
+				results.append(result)
+		else: # TODO give proper warning
+			return [0]
 		
 		return results
 
