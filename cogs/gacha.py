@@ -6,7 +6,7 @@ import random
 import json
 import asyncio
 
-class Gacha:
+class Gacha(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 

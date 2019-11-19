@@ -5,7 +5,7 @@ import re
 import random
 import asyncio
 
-class Character_Management:
+class Character_Management(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 

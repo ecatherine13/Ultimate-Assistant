@@ -8,7 +8,7 @@ import itertools
 import operator
 import asyncio
 
-class Investigation:
+class Investigation(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 

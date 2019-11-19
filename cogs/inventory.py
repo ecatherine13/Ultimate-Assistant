@@ -6,7 +6,7 @@ import random
 import re
 import asyncio
 
-class Inventory:
+class Inventory(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
