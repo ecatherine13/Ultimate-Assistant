@@ -5,7 +5,7 @@ import re
 import datetime
 import asyncio
 
-class Announcements:
+class Announcements(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
