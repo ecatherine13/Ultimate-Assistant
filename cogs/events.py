@@ -10,7 +10,7 @@ class Events(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 	
-	@client.event
+	@bot.event
 	async def on_ready(self):
 		
 		print("Here")
