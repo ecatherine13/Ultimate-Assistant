@@ -108,7 +108,7 @@ class Events(discord.Client):
 		await self.bot.change_presence(activity=discord.Game(name='!help'))
 
 		self.bot.loop.create_task(self.announcement_task())
-	@client.event
+	
 	async def on_guild_join(self, ctx):
 		guild_id = ctx.id
 
@@ -120,7 +120,6 @@ class Events(discord.Client):
 			cs.execute(f"INSERT INTO GuildData (GuildID) VALUES ({guild_id})")
 			conn.commit()
 	
-	@client.event
 	async def on_member_join(self, ctx): # ctx is the Member
 		guild_id = ctx.guild.id
 
@@ -136,12 +135,10 @@ class Events(discord.Client):
 			role = discord.utils.get(ctx.guild.roles, id=role_id)
 			await ctx.add_roles(role)
 	
-	@client.event
 	async def on_member_remove(self, ctx):
 		# TODO - Remove from User table?
 		return 0
 	
-	@client.event
 	async def on_guild_remove(self, ctx):
 		# Remove guild specific things from announcements, investigations, gacha, and user data but leave characters for now.
 
@@ -160,8 +157,7 @@ class Events(discord.Client):
 		cs.execute(f"DELETE FROM UserData WHERE GuildID == {ctx.id}")
 
 		conn.commit()
-	
-	@client.event
+
 	async def on_guild_role_delete(self, ctx): # ctx is Role
 		
 		# Check if role was a channel role
@@ -192,7 +188,7 @@ class Events(discord.Client):
 					cs.execute(f"UPDATE Maps SET OutgoingConnections = ? WHERE ChannelID == {conn_channel_id} LIMIT 1", (f"{new_conns_str}",))
 
 			conn.commit()
-	@client.event
+	
 	async def on_guild_channel_delete(self, ctx): #ctx is Channel
 
 		# Check if channel was in Maps
