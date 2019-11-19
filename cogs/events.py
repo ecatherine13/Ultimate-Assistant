@@ -5,12 +5,11 @@ import asyncio
 import datetime
 import json
 
-class Events(commands.Cog):
+class Events(discord.Client):
 
 	def __init__(self, bot):
 		self.bot = bot
 	
-	@self.bot.event
 	async def on_ready(self):
 		
 		print("Here")
