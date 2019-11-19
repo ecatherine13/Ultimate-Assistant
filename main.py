@@ -31,7 +31,7 @@ def main():
 
 	initial_extensions =	[
 							"cogs.utility",
-							"cogs.events",
+							# "cogs.events",
 							"cogs.admin", 
 							"cogs.management", 
 							"cogs.inventory", 
