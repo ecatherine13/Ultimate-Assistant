@@ -5,7 +5,7 @@ import asyncio
 import datetime
 import json
 
-class Events:
+class Events(commands.Cog):
 
 	def __init__(self, bot):
 		self.bot = bot
