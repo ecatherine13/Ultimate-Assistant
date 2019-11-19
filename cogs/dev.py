@@ -5,7 +5,7 @@ import re
 import random
 import asyncio
 
-class Dev:
+class Dev(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
