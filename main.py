@@ -189,10 +189,10 @@ def main():
 		print(f"\nLogged in as {bot.user.name} - {bot.user.id}\nVersion: {discord.__version__}\n")
 		await bot.change_presence(activity=discord.Game(name='!help'))
 
-		bot.loop.create_task(self.announcement_task())
+		bot.loop.create_task(announcement_task())
 	
 	@bot.event
-	async def on_guild_join(self, ctx):
+	async def on_guild_join(ctx):
 		guild_id = ctx.id
 
 		# If guild not in DB, add to it
