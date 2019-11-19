@@ -5,7 +5,7 @@ import random
 from .config import *
 import json
 
-class Dice:
+class Dice(commands.Cog):
 	
 	def __init__(self, bot):
 		self.bot = bot
