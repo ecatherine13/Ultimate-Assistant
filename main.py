@@ -91,7 +91,7 @@ def main():
 			await msg.delete()
 	
 	@bot.event
-	async def on_ready(self):
+	async def on_ready():
 		
 		print("Here")
 		# Correct announcements that have passed without posting (post times during bot downtime)
@@ -203,7 +203,7 @@ def main():
 			conn.commit()
 	
 	@bot.event
-	async def on_member_join(self, ctx): # ctx is the Member
+	async def on_member_join(ctx): # ctx is the Member
 		guild_id = ctx.guild.id
 
 		# Assign autorole if one is set up
@@ -219,12 +219,12 @@ def main():
 			await ctx.add_roles(role)
 	
 	@bot.event
-	async def on_member_remove(self, ctx):
+	async def on_member_remove(ctx):
 		# TODO - Remove from User table?
 		return 0
 	
 	@bot.event
-	async def on_guild_remove(self, ctx):
+	async def on_guild_remove(ctx):
 		# Remove guild specific things from announcements, investigations, gacha, and user data but leave characters for now.
 
 		# GuildData TODO
@@ -244,7 +244,7 @@ def main():
 		conn.commit()
 
 	@bot.event
-	async def on_guild_role_delete(self, ctx): # ctx is Role
+	async def on_guild_role_delete(ctx): # ctx is Role
 		
 		# Check if role was a channel role
 		cs.execute(f"SELECT ChannelID FROM Maps WHERE RoleID == {ctx.id} LIMIT 1")
@@ -276,7 +276,7 @@ def main():
 			conn.commit()
 	
 	@bot.event
-	async def on_guild_channel_delete(self, ctx): #ctx is Channel
+	async def on_guild_channel_delete(ctx): #ctx is Channel
 
 		# Check if channel was in Maps
 		cs.execute(f"SELECT 1 FROM Maps WHERE ChannelID == {ctx.id} LIMIT 1")
@@ -311,7 +311,7 @@ def main():
 
 	# Announcement background task
 	# TODO Allow for time pauses
-	async def announcement_task(self):
+	async def announcement_task():
 		in_sync = False # Changes to true on the first half hour available
 		while (True):
 			time_now = datetime.datetime.utcnow()
