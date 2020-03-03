@@ -1,5 +1,7 @@
 # Ultimate Assistant
 
+**This is obsolete as of 6th March, 2020. See the new repository**
+
 This is a Discord bot built with the purpose of catering to a community that gathers around the visual novel, *Danganronpa: Trigger Happy Havoc* and its sequels. The community focuses on writing original characters, crafting mysteries to solve together, and building imaginative settings to host roleplaying games. This project aims to lessen the workload on game hosts and offer utilities for both players and hosts.
 
 This bot is still in 'beta', and errors are automatically DMed to the developer. The report contains the server ID, channel ID, user ID, attempted command, and the error thrown. This info is all readily available to any bot and *cannot* be used to identify your private information. The developer also welcomes your feedback and suggestions, which can be given semi-anonymously with:
