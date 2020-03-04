@@ -20,7 +20,7 @@ https://discordapp.com/oauth2/authorize?client_id=517165856933937153&scope=bot
 
 To join the development / QnA server:
 
-https://discord.gg/X2mA9bF
+\[out-of-date invite\] 
 
 ## Important
 
